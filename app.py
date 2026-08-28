@@ -946,7 +946,7 @@ with tab_achieve:
     st.write(f"📅 Status Minggu Ini: **{d['last_weekly_reset']}**")
     st.divider()
 
-    # --- DAFTAR SELURUH ACHIEVEMENTS DALAM GAME ---
+    # DAFTAR SELURUH ACHIEVEMENTS DALAM GAME
     all_achievements = [
         # PERMANENT TARGETS (ACADEMIC & STUDY)
         {"name": "📚 Bookworm Master", "desc": "Total belajar mencapai 10 jam", "req_type": "study", "req_val": 10.0, "reward": 100},
@@ -981,14 +981,14 @@ with tab_achieve:
         {"name": "💧 Hydration Hero (Weekly Target)", "desc": "Minum air 2000ml dalam satu hari", "req_type": "water", "req_val": 2000, "reward": 100}
     ]
 
-    # --- RINGKASAN PROGRESS & TERBUKA ---
+    # RINGKASAN PROGRESS & TERBUKA
     unlocked_count = len(d["achievements"])
     total_count = len(all_achievements)
     st.write(f"📊 **Pencapaian Terbuka:** {unlocked_count} / {total_count} ({int((unlocked_count/total_count)*100)}%)")
     st.progress(unlocked_count / total_count)
     st.divider()
 
-    # --- LOGIKA LAMA (MENAMPILKAN ACHIEVEMENT TERBUKA) ---
+    # LOGIKA LAMA (MENAMPILKAN ACHIEVEMENT TERBUKA)
     st.markdown("### 🎉 Lencana yang Sudah Didapatkan")
     if d["achievements"]:
         for ach in d["achievements"]:
@@ -998,33 +998,46 @@ with tab_achieve:
 
     st.divider()
 
-    # --- LOGIKA TAMBAHAN (PROGRESS DAFTAR SELURUH ACHIEVEMENTS) ---
+    # LOGIKA TAMBAHAN (PROGRESS DAFTAR SELURUH ACHIEVEMENTS)
     st.markdown("### 📜 Daftar Seluruh Misi Achievement & Progress")
     for ach in all_achievements:
         is_unlocked = ach["name"] in d["achievements"]
         
-        # Hitung Nilai Current Progress
         curr_val = 0
-        if ach["req_type"] == "study": curr_val = d["total_study_hours"]
-        elif ach["req_type"] == "streak": curr_val = d["streak"]
-        elif ach["req_type"] == "boss": curr_val = d["boss_defeated_count"]
-        elif ach["req_type"] == "worship": curr_val = d.get("total_worship_count", 0)
-        elif ach["req_type"] == "stat_str": curr_val = d["stats"]["STR"]
-        elif ach["req_type"] == "stat_int": curr_val = d["stats"]["INT"]
-        elif ach["req_type"] == "level": curr_val = d["level"]
-        elif ach["req_type"] == "gold": curr_val = d["gold"]
-        elif ach["req_type"] == "quests_today": curr_val = d["quests_done_today"]
-        elif ach["req_type"] == "water": curr_val = d["water_ml"]
+        if ach["req_type"] == "study":
+            curr_val = d["total_study_hours"]
+        elif ach["req_type"] == "streak":
+            curr_val = d["streak"]
+        elif ach["req_type"] == "boss":
+            curr_val = d["boss_defeated_count"]
+        elif ach["req_type"] == "worship":
+            curr_val = d.get("total_worship_count", 0)
+        elif ach["req_type"] == "stat_str":
+            curr_val = d["stats"]["STR"]
+        elif ach["req_type"] == "stat_int":
+            curr_val = d["stats"]["INT"]
+        elif ach["req_type"] == "level":
+            curr_val = d["level"]
+        elif ach["req_type"] == "gold":
+            curr_val = d["gold"]
+        elif ach["req_type"] == "quests_today":
+            curr_val = d["quests_done_today"]
+        elif ach["req_type"] == "water":
+            curr_val = d["water_ml"]
 
         pct = min(1.0, float(curr_val) / float(ach["req_val"]))
         
-        # Tampilan Item Achievement
+        name_str = ach['name']
+        desc_str = ach['desc']
+        reward_val = ach['reward']
+        req_val = ach['req_val']
+
         if is_unlocked:
-            st.caption(f"✅ **{ach['name']}** — *{ach['desc']}* (Hadiah: +{ach['reward']} Gold)")
+            st.caption(f"✅ **{name_str}** — *{desc_str}* (Hadiah: +{reward_val} Gold)")
             st.progress(1.0)
         else:
-            st.caption(f"🔒 **{ach['name']}** — *{ach['desc']}* ({curr_val}/{ach['req_val']}) — Hadiah: 🪙 {ach['reward']} Gold")
-            st.progress(pct)")
+            st.caption(f"🔒 **{name_str}** — *{desc_str}* ({curr_val}/{req_val}) — Hadiah: 🪙 {reward_val} Gold")
+            st.progress(pct)
 
 # ================= TAB 10: ANALYTICS =================
 with tab_analytics:
