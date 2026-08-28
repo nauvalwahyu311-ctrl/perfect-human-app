@@ -65,6 +65,11 @@ default_data = {
     "hp": 100, "max_hp": 100,
     "stamina": 100, "max_stamina": 100,
     "stats": {"STR": 10, "INT": 10, "AGI": 10, "VIT": 10},
+    "skill_points": 0,
+    "skills": {
+        "iron_focus": 0,       # Hemat stamina belajar/workout per level
+        "bounty_hunter": 0     # Extra gold dari quest per level
+    },
     "water_ml": 0,
     "quests_done_today": 0,
     "inventory": [],
@@ -84,7 +89,9 @@ default_data = {
     "custom_quests": [],
     "achievements": [],
     "total_study_hours": 0.0,
-    "last_weekly_reset": ""
+    "last_weekly_reset": "",
+    "daily_event": None,
+    "last_event_date": ""
 }
 
 if "data" not in st.session_state:
@@ -176,6 +183,9 @@ def add_exp(amount, stat_type=None, stat_gain=1):
         amount *= 2
         st.info("✨ Buff Double EXP Aktif! EXP dilipatgandakan.")
 
+    if d["daily_event"] and d["daily_event"]["type"] == "exp_boost":
+        amount = int(amount * d["daily_event"]["val"])
+
     if "👓 Glasses of Wisdom" in d["equipped_items"] and stat_type == "INT":
         amount = int(amount * 1.1)
     if "🎧 Noise-Canceling Headphones" in d["equipped_items"] and stat_type == "INT":
@@ -194,6 +204,7 @@ def add_exp(amount, stat_type=None, stat_gain=1):
     while d["exp"] >= d["exp_needed"]:
         d["exp"] -= d["exp_needed"]
         d["level"] += 1
+        d["skill_points"] += 1
         d["exp_needed"] = int(d["exp_needed"] * 1.3)
         d["max_hp"] += 15
         d["hp"] = d["max_hp"]
@@ -203,7 +214,7 @@ def add_exp(amount, stat_type=None, stat_gain=1):
         update_title()
         play_sfx("level_up")
         st.balloons()
-        st.success(f"🎉 LEVEL UP! Nauval naik ke Level {d['level']}! (+50 Gold)")
+        st.success(f"🎉 LEVEL UP! Nauval naik ke Level {d['level']}! (+50 Gold, +1 Skill Point)")
     
     check_achievements()
     save_game()
@@ -233,8 +244,27 @@ def apply_penalty(hp_loss, exp_loss):
     save_game()
     st.error(f"⚠️ Hukuman Diterima: -{hp_loss} HP | -{exp_loss} EXP")
 
-# Synchronize System Time
+def trigger_daily_event():
+    today_str = str(date.today())
+    if d["last_event_date"] != today_str:
+        d["last_event_date"] = today_str
+        events = [
+            {"name": "🌧️ Hujan Deras", "desc": "+20% EXP Belajar hari ini!", "type": "exp_boost", "val": 1.2},
+            {"name": "🪙 Penemu Koin", "desc": "Menemukan koin kuno! (+50 Gold)", "type": "gold", "val": 50},
+            {"name": "☀️ Cuaca Cerah", "desc": "Stamina Pulih Sepenuhnya!", "type": "stamina", "val": d["max_stamina"]},
+            {"name": "☕ Kafe Diskon", "desc": "Semangat membara! +10 Stamina Bonus", "type": "stamina_bonus", "val": 10}
+        ]
+        chosen = random.choice(events)
+        d["daily_event"] = chosen
+        if chosen["type"] == "gold":
+            d["gold"] += chosen["val"]
+        elif chosen["type"] == "stamina":
+            d["stamina"] = d["max_stamina"]
+        save_game()
+
+# Synchronize System Time & Random Event
 check_achievements()
+trigger_daily_event()
 
 # ==========================================
 # 🎛️ SIDEBAR CONTROL & SYSTEM
@@ -251,19 +281,51 @@ with st.sidebar:
         st.success("Data berhasil disimpan!")
 
     st.divider()
+    st.subheader("📦 Export & Backup Data")
+    
+    # Download JSON
+    json_data = json.dumps(d, indent=4)
+    st.download_button(
+        label="📥 Download Save Data (JSON)",
+        data=json_data,
+        file_name=f"save_data_{date.today()}.json",
+        mime="application/json",
+        use_container_width=True
+    )
+    
+    # Download CSV Log
+    if d["activity_log"]:
+        df_log = pd.DataFrame(d["activity_log"])
+        csv_data = df_log.to_csv(index=False)
+        st.download_button(
+            label="📊 Export Log Aktivitas (CSV)",
+            data=csv_data,
+            file_name=f"activity_log_{date.today()}.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+
+    st.divider()
     with st.expander("🚨 Zona Bahaya (Reset Game)"):
-        st.caption("Menghapus semua progress dan mengulang dari awal.")
+        st.caption("Untuk mereset seluruh data, ketik kata **yakin** sebanyak 3 kali dipisah spasi: `yakin yakin yakin`")
+        confirm_code = st.text_input("Kode Konfirmasi Reset", value="", placeholder="yakin yakin yakin", key="reset_code_input")
         if st.button("⚠️ Reset Seluruh Data", use_container_width=True):
-            if os.path.exists("save_data.json"):
-                os.remove("save_data.json")
-            st.session_state.data = default_data
-            st.rerun()
+            if confirm_code.strip() == "yakin yakin yakin":
+                if os.path.exists("save_data.json"):
+                    os.remove("save_data.json")
+                st.session_state.data = default_data
+                st.rerun()
+            else:
+                st.error("Kode konfirmasi salah! Ketik 'yakin yakin yakin' untuk melanjutkan.")
 
 # ==========================================
 # 🏰 HEADER STATUS KARAKTER
 # ==========================================
 st.title(f"🏰 KETUA {d['name'].upper()}")
 st.caption(f"Gelar Kedisiplinan: **{d['title']}** | Pet: **{d['active_pet']}**")
+
+if d["daily_event"]:
+    st.warning(f"🎲 **Peristiwa Hari Ini:** {d['daily_event']['name']} — {d['daily_event']['desc']}")
 
 st.subheader(f"🎯 Main Goal: {d['main_goal']}")
 st.progress(d["goal_progress"] / 100, text=f"Progres Utama: {d['goal_progress']}%")
@@ -282,8 +344,9 @@ with col_sta:
     st.progress(min(d['stamina'] / d['max_stamina'], 1.0))
 
 c1, c2, c3, c4 = st.columns(4)
+streak_bonus_mult = 2 if "💍 Ring of Consistency" in d["equipped_items"] else 1
 c1.metric("🪙 Gold", f"{d['gold']}")
-c2.metric("🔥 Streak", f"{d['streak']} Hr")
+c2.metric("🔥 Streak", f"{d['streak']} Hr (x{streak_bonus_mult})")
 c3.metric("💧 Air", f"{d['water_ml']} ml")
 c4.metric("⚔️ Quest", f"{d['quests_done_today']}")
 
@@ -296,7 +359,7 @@ if d["active_buffs"] or d["equipped_items"] or d["inventory"]:
     for inv in d["inventory"]:
         st.warning(f"🎒 Item Storage: **{inv}**")
 
-with st.expander("📊 Lihat Atribut Karakter", expanded=False):
+with st.expander("📊 Lihat Atribut & Skill Karakter", expanded=False):
     s1, s2, s3, s4 = st.columns(4)
     s1.metric("🏋️ STR", d["stats"]["STR"])
     s2.metric("📚 INT", d["stats"]["INT"])
@@ -308,25 +371,30 @@ st.divider()
 # ==========================================
 # 📑 TAB UTAMA APLIKASI
 # ==========================================
-tab_quest, tab_boss, tab_penalty, tab_shop, tab_equips, tab_gacha, tab_pet, tab_achieve, tab_analytics = st.tabs([
-    "⚔️ Quest", "👾 Boss", "🚨 Penalty", "🧪 Shop", "🗡️ Armory", "🎡 Gacha", "🐾 Pet", "🏆 Badges", "📈 Analytics"
+tab_quest, tab_skill, tab_boss, tab_penalty, tab_shop, tab_equips, tab_gacha, tab_pet, tab_achieve, tab_analytics = st.tabs([
+    "⚔️ Quest", "🌳 Skill Tree", "👾 Boss", "🚨 Penalty", "🧪 Shop", "🗡️ Armory", "🎡 Gacha", "🐾 Pet", "🏆 Badges", "📈 Analytics"
 ])
 
 # ================= TAB 1: QUEST =================
 with tab_quest:
     st.subheader("📌 Misi Kedisiplinan Harian")
     
+    iron_focus_lvl = d["skills"]["iron_focus"]
+    bounty_lvl = d["skills"]["bounty_hunter"]
+    
     with st.expander("📚 1. Sesi Belajar & Skill", expanded=True):
         study_hours = st.number_input("Berapa jam belajar hari ini?", min_value=0.5, max_value=12.0, value=1.0, step=0.5)
-        stamina_cost = int(study_hours * 20)
+        stamina_cost = max(5, int(study_hours * (20 - iron_focus_lvl * 2)))
+        gold_gained = int(study_hours * (25 + bounty_lvl * 5)) * streak_bonus_mult
+        
         if st.button(f"🚀 Selesaikan Belajar ({study_hours} Jam)", use_container_width=True):
             if d["stamina"] >= stamina_cost:
                 d["stamina"] -= stamina_cost
-                d["gold"] += int(study_hours * 25)
+                d["gold"] += gold_gained
                 d["total_study_hours"] += study_hours
                 add_exp(int(study_hours * 100), "INT", int(study_hours * 2))
                 log_activity("Belajar (Jam)", study_hours)
-                st.success("Selesai Belajar!")
+                st.success(f"Selesai Belajar! (+{gold_gained} Gold)")
                 st.rerun()
             else:
                 st.warning("Stamina tidak cukup!")
@@ -336,13 +404,16 @@ with tab_quest:
         cost_work = int(workout_mins * 0.5)
         if "👟 Running Shoes of Agility" in d["equipped_items"]:
             cost_work = int(cost_work * 0.7)
+        cost_work = max(5, cost_work - iron_focus_lvl)
+        gold_gained_work = int(workout_mins * (0.6 + bounty_lvl * 0.1)) * streak_bonus_mult
+
         if st.button(f"🏋️ Selesaikan Workout ({workout_mins} Mnt)", use_container_width=True):
             if d["stamina"] >= cost_work:
                 d["stamina"] -= cost_work
-                d["gold"] += int(workout_mins * 0.6)
+                d["gold"] += gold_gained_work
                 add_exp(int(workout_mins * 2.5), "STR", max(1, int(workout_mins / 20)))
                 log_activity("Workout (Menit)", workout_mins)
-                st.success("Workout Selesai!")
+                st.success(f"Workout Selesai! (+{gold_gained_work} Gold)")
                 st.rerun()
 
     with st.expander("📜 3. Gunakan Instant Scroll Item"):
@@ -355,18 +426,58 @@ with tab_quest:
         else:
             st.caption("Kamu tidak memiliki Scroll of Instant Focus. Beli di Toko Shop!")
 
-# ================= TAB 2: BOSS =================
+# ================= TAB 2: SKILL TREE =================
+with tab_skill:
+    st.subheader("🌳 Skill Tree (Kemampuan Pasif Karakter)")
+    st.write(f"Sisa Skill Points (SP): **{d['skill_points']}**")
+    st.divider()
+
+    sk1, sk2 = st.columns(2)
+    with sk1:
+        st.markdown("### 🛡️ Iron Focus")
+        st.write(f"Level Saat Ini: **{d['skills']['iron_focus']} / 5**")
+        st.caption("Mengurangi konsumsi stamina saat belajar & workout.")
+        if st.button("Tingkatkan Iron Focus (-1 SP)", disabled=(d["skill_points"] <= 0 or d["skills"]["iron_focus"] >= 5)):
+            d["skill_points"] -= 1
+            d["skills"]["iron_focus"] += 1
+            save_game()
+            st.rerun()
+
+    with sk2:
+        st.markdown("### 💰 Bounty Hunter")
+        st.write(f"Level Saat Ini: **{d['skills']['bounty_hunter']} / 5**")
+        st.caption("Meningkatkan jumlah Gold yang didapatkan dari Quest.")
+        if st.button("Tingkatkan Bounty Hunter (-1 SP)", disabled=(d["skill_points"] <= 0 or d["skills"]["bounty_hunter"] >= 5)):
+            d["skill_points"] -= 1
+            d["skills"]["bounty_hunter"] += 1
+            save_game()
+            st.rerun()
+
+# ================= TAB 3: BOSS RAID =================
 with tab_boss:
-    st.subheader(f"⚔️ Dungeon RAID: {d['boss_name']}")
+    boss_list = [
+        {"name": "👾 Procrastination Demon", "weakness": "INT", "desc": "Sensitif terhadap Sesi Belajar!"},
+        {"name": "🐉 Distraction Dragon", "weakness": "STR", "desc": "Hanya lemah terhadap Latihan Fisik/Workout!"},
+        {"name": "🔥 Burnout Demon", "weakness": "VIT", "desc": "Butuh konsistensi pemulihan stamina & fokus!"}
+    ]
+    # Ganti Boss Mingguan Berdasarkan Minggu Server
+    current_week = datetime.now().isocalendar()[1]
+    active_boss = boss_list[current_week % len(boss_list)]
+    d["boss_name"] = active_boss["name"]
+
+    st.subheader(f"⚔️ Dungeon RAID Mingguan: {d['boss_name']}")
+    st.caption(f"Kelemahan Boss: **Atribut {active_boss['weakness']}** ({active_boss['desc']})")
     st.progress(max(0.0, min(d["boss_hp"] / d["boss_max_hp"], 1.0)), text=f"HP Boss: {d['boss_hp']} / {d['boss_max_hp']}")
 
-    base_damage = d["stats"]["STR"] * 2 + d["stats"]["INT"] * 2
+    # Perhitungan Damage dengan Bonus Kelemahan
+    stat_bonus = d["stats"][active_boss["weakness"]] * 3
+    base_damage = d["stats"]["STR"] * 2 + d["stats"]["INT"] * 2 + stat_bonus
     if "🗡️ Steel Sword of Focus" in d["equipped_items"]:
         base_damage = int(base_damage * 1.15)
     if d["active_pet"] == "🐺 Spirit Wolf":
         base_damage += 25
 
-    st.info(f"💥 Total Damage Serangan Nauval: **{base_damage} HP**")
+    st.info(f"💥 Total Damage Serangan Nauval (Termasuk Bonus Kelemahan): **{base_damage} HP**")
 
     if st.button(f"⚔️ Serang {d['boss_name']} (-20 Stamina)", use_container_width=True):
         if d["stamina"] >= 20:
@@ -385,7 +496,7 @@ with tab_boss:
             save_game()
             st.rerun()
 
-# ================= TAB 3: PENALTY =================
+# ================= TAB 4: PENALTY =================
 with tab_penalty:
     st.subheader("🚨 Fitur Hukuman Pelanggaran")
     sosmed_mins = st.number_input("Berapa menit buang waktu / sosmed?", min_value=15, max_value=300, value=30, step=15)
@@ -393,7 +504,7 @@ with tab_penalty:
         apply_penalty(int(sosmed_mins * 0.8), int(sosmed_mins * 2))
         st.rerun()
 
-# ================= TAB 4: SHOP =================
+# ================= TAB 5: SHOP =================
 with tab_shop:
     st.subheader("🧪 Toko Potion & Items")
     potions = [
@@ -420,7 +531,7 @@ with tab_shop:
                 st.success(f"Berhasil membeli {p['name']}!")
                 st.rerun()
 
-# ================= TAB 5: ARMORY =================
+# ================= TAB 6: ARMORY =================
 with tab_equips:
     st.subheader("🗡️ Armory & Equipment RPG")
     equips = [
@@ -443,7 +554,7 @@ with tab_equips:
                     save_game()
                     st.rerun()
 
-# ================= TAB 6: GACHA =================
+# ================= TAB 7: GACHA =================
 with tab_gacha:
     st.subheader("🎡 Daily Spin Wheel")
     today_str = str(date.today())
@@ -452,16 +563,21 @@ with tab_gacha:
     else:
         if st.button("🎰 Putar Spin Harian", use_container_width=True):
             d["last_gacha_date"] = today_str
-            rewards = [("🪙 Bonus +100 Gold", "gold", 100), ("✨ Bonus +150 EXP", "exp", 150)]
+            # Bonus pengali perolehan gacha dari streak harian
+            streak_multiplier = 1 + (d["streak"] * 0.1)
+            rewards = [
+                ("🪙 Bonus Gold", "gold", int(100 * streak_multiplier)), 
+                ("✨ Bonus EXP", "exp", int(150 * streak_multiplier))
+            ]
             if any(b["name"] == "🍀 Clover of Luck" for b in d["active_buffs"]):
-                rewards.append(("💎 Jackpot Super (+300 Gold)", "gold", 300))
+                rewards.append(("💎 Jackpot Super (+300 Gold)", "gold", int(300 * streak_multiplier)))
             chosen = random.choice(rewards)
             if chosen[1] == "gold": d["gold"] += chosen[2]
             elif chosen[1] == "exp": add_exp(chosen[2])
             save_game()
             st.rerun()
 
-# ================= TAB 7: PET =================
+# ================= TAB 8: PET =================
 with tab_pet:
     st.subheader("🐾 Pet Companions")
     pets = [
@@ -483,7 +599,7 @@ with tab_pet:
                     save_game()
                     st.rerun()
 
-# ================= TAB 8: ACHIEVEMENTS =================
+# ================= TAB 9: ACHIEVEMENTS =================
 with tab_achieve:
     st.subheader("🏆 Real-Time & Weekly Achievements")
     st.caption("Pencapaian ini diperbarui secara otomatis menggunakan Waktu Real-Time Server.")
@@ -497,7 +613,7 @@ with tab_achieve:
     else:
         st.info("Belum ada Achievement yang didapatkan. Tingkatkan level dan quest harianmu!")
 
-# ================= TAB 9: ANALYTICS =================
+# ================= TAB 10: ANALYTICS =================
 with tab_analytics:
     st.subheader("📈 Analytics Kedisiplinan")
     if d["activity_log"]:
