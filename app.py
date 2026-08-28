@@ -739,7 +739,7 @@ with tab_skill:
             st.success("Titan Form Aktif!")
             st.rerun()
 
-# ================= TAB 3: BOSS RAID (WITH DETAILED INVENTORY & EFFECTS) =================
+# ================= TAB 3: BOSS RAID (WITH INTERACTIVE EQUIP/UNEQUIP INVENTORY) =================
 with tab_boss:
     import random
 
@@ -832,6 +832,10 @@ with tab_boss:
 
     if "battle_logs" not in st.session_state:
         st.session_state["battle_logs"] = ["Dungeon raid dibuka. Bersiaplah bertempur, Nauval!"]
+
+    # Pastikan key 'equipped_items' ada di dictionary game state (d)
+    if "equipped_items" not in d:
+        d["equipped_items"] = []
 
     # --- UI HEADER & INFO BOSS ---
     st.subheader(f"⚔️ Dungeon RAID Mingguan: {d['boss_name']}")
@@ -936,7 +940,7 @@ with tab_boss:
                             drop_msg = f"🎁 LEGENDARY DROP! Nauval mendapatkan: **{dropped_item}**!"
                             st.session_state["battle_logs"].insert(0, drop_msg)
                             st.success(drop_msg)
-                            st.info(f"✨ Item otomatis aktif memberikan buff: {active_boss['effect_desc']}")
+                            st.info(f"✨ Item masuk ke tas inventory. Silakan pasang (*equip*) dari tab rincian item!")
                         else:
                             d["gold"] += 400
                             dup_msg = f"🎁 Drop {dropped_item} sudah dimiliki! Ditukar bonus +400 Gold."
@@ -993,8 +997,8 @@ with tab_boss:
 
     st.markdown("---")
 
-    # --- FITUR TAMBAHAN: LIVE COMBAT LOG & DETAIL INVENTORI EFEK ITEM ---
-    tab_log, tab_collection = st.tabs(["📜 Live Battle Log", "🛡️ Rincian Efek Inventori & Item"])
+    # --- FITUR TAMBAHAN: LIVE COMBAT LOG & DETAIL INVENTORI DENGAN TOMBOL EQUIP/UNEQUIP ---
+    tab_log, tab_collection = st.tabs(["📜 Live Battle Log", "🛡️ Rincian & Manajemen Efek Item"])
     
     with tab_log:
         st.markdown("Aktivitas pertempuran terkini:")
@@ -1003,10 +1007,9 @@ with tab_boss:
             st.text(f"• {log}")
             
     with tab_collection:
-        st.markdown("### 🎒 Kamus Efek Item & Gear Milik Nauval")
-        st.caption("Daftar lengkap efek dari setiap item yang tersimpan di Inventory maupun yang sedang di-equip.")
+        st.markdown("### 🎒 Manajemen Tas Inventory & Equip Gear")
+        st.caption("Klik tombol **'Pakai (Equip)'** agar item aktif memperkuat atributmu dalam pertempuran, atau **'Lepas (Unequip)'** untuk menyimpannya kembali ke tas.")
 
-        # Kamus database efek item game
         item_effects_database = {
             "🗡️ Steel Sword of Focus": "Memberikan tambahan +15% kekuatan Damage saat menyerang musuh atau boss.",
             "💣 Procrastination Bomb": "Item habis pakai (consumable). Memberikan 250 Damage murni instan langsung ke HP Boss saat dilempar.",
@@ -1023,25 +1026,43 @@ with tab_boss:
             "🔥 Armor of the Overlord": "Memberikan 2.5x Lipat Damage murni & proteksi kekebalan mutlak dari kekalahan."
         }
 
-        # Gabungkan semua unique items dari inventory dan equipped items
         unique_owned_items = list(set(d["inventory"] + d["equipped_items"]))
 
         if unique_owned_items:
             for item in unique_owned_items:
                 effect_explanation = item_effects_database.get(item, "Item khusus dengan efek misterius yang membantu produktivitasmu.")
+                is_equipped = item in d["equipped_items"]
                 
-                # Tampilkan dalam bentuk card ekspansif/markdown rapi
                 with st.container(border=True):
-                    col_item1, col_item2 = st.columns([1, 2])
+                    col_item1, col_item2, col_item3 = st.columns([1.5, 2, 1])
                     with col_item1:
                         st.markdown(f"**{item}**")
-                        is_equipped = item in d["equipped_items"]
                         if is_equipped:
-                            st.caption("🟢 Status: Sedang Dipakai (Equipped)")
+                            st.caption("🟢 Status: Dipakai (Equipped)")
                         else:
                             st.caption("🔵 Status: Dalam Tas (Inventory)")
                     with col_item2:
                         st.markdown(f"*Efek:* {effect_explanation}")
+                    with col_item3:
+                        # Logika tombol interaktif Pakai / Lepas
+                        if not is_equipped:
+                            # Jangan beri tombol equip untuk item consumable seperti Bomb & Elixir
+                            if item not in ["💣 Procrastination Bomb", "🧪 Mega Elixir"]:
+                                if st.button("🟢 Pakai", key=f"equip_{item}", use_container_width=True):
+                                    d["inventory"].remove(item)
+                                    d["equipped_items"].append(item)
+                                    save_game()
+                                    st.success(f"Berhasil memakai {item}!")
+                                    st.rerun()
+                            else:
+                                st.caption("Gunakan langsung di panel aksi")
+                        else:
+                            if st.button("🔴 Lepas", key=f"unequip_{item}", use_container_width=True):
+                                d["equipped_items"].remove(item)
+                                d["inventory"].append(item)
+                                save_game()
+                                st.warning(f"Berhasil melepas {item}!")
+                                st.rerun()
         else:
             st.info("Tas inventori Nauval masih kosong. Selesaikan misi, belanja di shop, atau taklukkan Boss Raid untuk mengisinya!")
 # ================= TAB 4: PENALTY =================
