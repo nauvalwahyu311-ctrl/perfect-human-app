@@ -224,6 +224,12 @@ def add_exp(amount, stat_type=None, stat_gain=1):
         amount *= 2
         st.info("✨ Buff Double EXP Aktif! EXP dilipatgandakan.")
 
+    # FITUR 1: Real-Time Early Bird Buff
+    current_hour = datetime.now().hour
+    if 5 <= current_hour <= 8 and stat_type == "INT":
+        amount = int(amount * 1.3)
+        st.info("🌅 Buff Early Bird Aktif! +30% Extra EXP Belajar Pagi Hari.")
+
     # Synergy Perfect Balance
     if d["stats"]["STR"] >= 30 and d["stats"]["INT"] >= 30 and d["stats"]["AGI"] >= 30 and d["stats"]["VIT"] >= 30:
         amount = int(amount * 1.25)
@@ -294,6 +300,33 @@ def apply_penalty(hp_loss, exp_loss):
         st.success("🛡️ Potion Kebal Penundaan digunakan otomatis! Hukuman dibatalkan.")
         save_game()
         return
+
+    # FITUR 1: Real-Time Jam Kalong Debuff (Penalti HP bertambah saat malam hari)
+    current_hour = datetime.now().hour
+    if current_hour >= 22 or current_hour < 4:
+        hp_loss = int(hp_loss * 1.2)
+        st.error("🌙 Debuff Jam Kalong! Kerusakan HP meningkat 20% karena dilakukan di malam hari.")
+
+    d["hp"] = max(0, d["hp"] - hp_loss)
+    d["exp"] = max(0, d["exp"] - exp_loss)
+    save_game()
+
+# ==========================================
+# 🕒 DISPLAY HEADER & REAL-TIME BUFF BANNER
+# ==========================================
+st.title("🏰 Perfect Human RPG")
+st.caption(f"Selamat Datang kembali, **{d['name']}**! Status: **{d['title']}**")
+
+# Banner Tampilan Fitur 1 (Real-Time Time System)
+current_hour = datetime.now().hour
+now_str = datetime.now().strftime("%H:%M")
+
+if 5 <= current_hour <= 8:
+    st.info(f"🌅 **[ Jam {now_str} ] - Buff Early Bird Aktif!** Belajar di pagi hari memberikan bonus +30% EXP INT.")
+elif current_hour >= 22 or current_hour < 4:
+    st.error(f"🌙 **[ Jam {now_str} ] - Debuff Jam Kalong!** Melakukan pelanggaran/hukuman di malam hari memberikan ekstra 20% kerusakan HP.")
+else:
+    st.caption(f"🕒 Jam Sistem: **{now_str} WIB** (Kondisi Waktu Normal)")
 
     has_shield = any(b["name"] == "🛡️ Focus Shield Buff" for b in d["active_buffs"])
     if has_shield:
