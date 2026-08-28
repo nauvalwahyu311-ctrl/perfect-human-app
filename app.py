@@ -720,35 +720,61 @@ with tab_skill:
 
 # ================= TAB 3: BOSS RAID =================
 with tab_boss:
+    import random
+
     boss_list = [
-        {"name": "👾 Procrastination Demon", "weakness": "INT", "desc": "Sensitif terhadap Sesi Belajar!"},
-        {"name": "🐉 Distraction Dragon", "weakness": "STR", "desc": "Hanya lemah terhadap Latihan Fisik/Workout!"},
-        {"name": "🔥 Burnout Demon", "weakness": "VIT", "desc": "Butuh konsistensi pemulihan stamina & fokus!"}
+        {"name": "👾 Procrastination Demon", "weakness": "INT", "desc": "Sensitif terhadap Sesi Belajar!", "drop_rate": 0.45, "legendary_drop": "🗡️ Excalibur of Focus"},
+        {"name": "🐉 Distraction Dragon", "weakness": "STR", "desc": "Hanya lemah terhadap Latihan Fisik/Workout!", "drop_rate": 0.40, "legendary_drop": "🛡️ Aegis Shield of Willpower"},
+        {"name": "🔥 Burnout Demon", "weakness": "VIT", "desc": "Butuh konsistensi pemulihan stamina & fokus!", "drop_rate": 0.35, "legendary_drop": "💍 Ring of Endless Energy"},
+        {"name": "📱 Social Media Overlord", "weakness": "AGI", "desc": "Sangat cepat! Lemah terhadap kecepatan penyelesaian tugas!", "drop_rate": 0.30, "legendary_drop": "👟 Boots of Hyper Productivity"},
+        {"name": "👑 Lord of Comfort Zone", "weakness": "INT", "desc": "Membuat malas bergerak! Hancurkan dengan kecerdasan strategi!", "drop_rate": 0.25, "legendary_drop": "👑 Crown of Unstoppable Discipline"},
+        {"name": "💀 Nightmare of Deadlines", "weakness": "STR", "desc": "Sangat mematikan dekat batas waktu! Serang dengan kekuatan penuh!", "drop_rate": 0.20, "legendary_drop": "⚔️ Scythe of Zero Delay"},
+        {"name": "💤 Slothful Giant", "weakness": "VIT", "desc": "Tubuh raksasa penuh kemalasan! Kuras staminanya!", "drop_rate": 0.18, "legendary_drop": "📿 Amulet of Endless Vitality"},
+        {"name": "🌀 Chaos Phantom", "weakness": "AGI", "desc": "Berpindah-pindah dimensi waktu! Kecepatan adalah kunci!", "drop_rate": 0.15, "legendary_drop": "⌛ Cloak of Chronos"},
+        {"name": "🌪️ Tornado of Doubt", "weakness": "INT", "desc": "Menggoyahkan keyakinan belajar! Lawan dengan logika tajam!", "drop_rate": 0.12, "legendary_drop": "🔮 Orb of Absolute Clarity"},
+        {"name": "🌋 Titan of Chaos", "weakness": "STR", "desc": "Boss pamungkas dengan kekuatan vulkanik! Hancurkan dengan kekuatan maksimal!", "drop_rate": 0.10, "legendary_drop": "🔥 Armor of the Overlord"}
     ]
+    
     current_week = datetime.now().isocalendar()[1]
     active_boss = boss_list[current_week % len(boss_list)]
     d["boss_name"] = active_boss["name"]
 
     st.subheader(f"⚔️ Dungeon RAID Mingguan: {d['boss_name']}")
     st.caption(f"Kelemahan Boss: **Atribut {active_boss['weakness']}** ({active_boss['desc']})")
+    st.caption(f"🎁 Potential Legendary Drop: **{active_boss['legendary_drop']}** (Drop Rate: {int(active_boss['drop_rate']*100)}%)")
+    
     st.progress(max(0.0, min(d["boss_hp"] / d["boss_max_hp"], 1.0)), text=f"HP Boss: {d['boss_hp']} / {d['boss_max_hp']}")
 
+    # --- PERHITUNGAN DAMAGE & BONUS ---
     stat_bonus = d["stats"][active_boss["weakness"]] * 3
     base_damage = d["stats"]["STR"] * 2 + d["stats"]["INT"] * 2 + stat_bonus
-    
-    # Skill Exam Crusher Bonus
+
+    # Skill Bonus
     if d["skills"]["exam_crusher"] > 0 and active_boss["weakness"] == "INT":
         base_damage = int(base_damage * 1.25)
-
-    # Skill Adrenaline Rush
     if d["skills"]["adrenaline_rush"] > 0 and (d["hp"] / d["max_hp"]) < 0.3:
         base_damage = int(base_damage * 1.5)
         st.info("🔥 Adrenaline Rush menambah +50% Damage saat HP sekarat!")
 
+    # Bonus Equipment Biasa & Legendaris
     if "🗡️ Steel Sword of Focus" in d["equipped_items"]:
         base_damage = int(base_damage * 1.15)
+    if "🗡️ Excalibur of Focus" in d["equipped_items"]:
+        base_damage = int(base_damage * 1.50)
+    if "🛡️ Aegis Shield of Willpower" in d["equipped_items"]:
+        base_damage = int(base_damage * 1.30)
+    if "👑 Crown of Unstoppable Discipline" in d["equipped_items"]:
+        base_damage = int(base_damage * 1.75)
+    if "⚔️ Scythe of Zero Delay" in d["equipped_items"]:
+        base_damage = int(base_damage * 2.00)
+    if "🔥 Armor of the Overlord" in d["equipped_items"]:
+        base_damage = int(base_damage * 2.50)
+
+    # Bonus Pet
     if d["active_pet"] == "🐺 Spirit Wolf":
         base_damage += 25
+    elif d["active_pet"] == "🐲 Baby Dragon":
+        base_damage = int(base_damage * 1.20)
 
     # Check Titan Form Buff
     has_titan = any(b["name"] == "💥 Titan Form Buff (4x Damage)" for b in d["active_buffs"])
@@ -756,31 +782,94 @@ with tab_boss:
         base_damage *= 4
         st.warning("⚡ Titan Form Aktif! 4x Multiplier Damage!")
 
-    st.info(f"💥 Total Damage Serangan Nauval: **{base_damage} HP**")
+    # Hitung Critical Hit Berdasarkan AGI
+    crit_chance = min(0.60, d["stats"]["AGI"] * 0.025)
+    is_crit = random.random() < crit_chance
+    if is_crit:
+        base_damage = int(base_damage * 2.0)
 
-    if st.button(f"⚔️ Serang {d['boss_name']} (-20 Stamina)", use_container_width=True):
-        if d["stamina"] >= 20:
-            play_sfx("attack")
-            d["stamina"] -= 20
-            d["boss_hp"] -= base_damage
+    st.info(f"💥 Damage Per Serangan: **{base_damage} HP** {'⚡ (CRITICAL HIT!)' if is_crit else ''}")
 
-            if has_titan:
-                d["active_buffs"] = [b for b in d["active_buffs"] if b["name"] != "💥 Titan Form Buff (4x Damage)"]
+    # --- ACTION TOMBOL SERANG & FITUR TAMBAHAN ---
+    col_a, col_b, col_c = st.columns(3)
 
-            if d["boss_hp"] <= 0:
-                play_sfx("level_up")
-                st.balloons()
-                d["boss_defeated_count"] += 1
-                d["gold"] += 100
-                add_exp(250)
-                d["boss_max_hp"] = int(d["boss_max_hp"] * 1.4)
-                d["boss_hp"] = d["boss_max_hp"]
-                st.success(f"🔥 VICTORY! Nauval mengalahkan {d['boss_name']}!")
-            save_game()
-            st.rerun()
+    with col_a:
+        if st.button(f"⚔️ Serang (-20 Stamina)", use_container_width=True):
+            if d["stamina"] >= 20:
+                play_sfx("attack")
+                d["stamina"] -= 20
+                
+                boss_dodged = (active_boss["weakness"] == "AGI") and (random.random() < 0.12)
+                
+                if boss_dodged:
+                    st.error(f"💨 Serangan Meleset! {d['boss_name']} berhasil mengelak!")
+                else:
+                    d["boss_hp"] -= base_damage
+                    st.success(f"💥 Nauval memberikan {base_damage} Damage!")
+
+                if has_titan:
+                    d["active_buffs"] = [b for b in d["active_buffs"] if b["name"] != "💥 Titan Form Buff (4x Damage)"]
+
+                if d["boss_hp"] <= 0:
+                    play_sfx("level_up")
+                    st.balloons()
+                    d["boss_defeated_count"] += 1
+                    reward_gold = 200 + (d["boss_defeated_count"] * 30)
+                    reward_exp = 400 + (d["boss_defeated_count"] * 60)
+                    d["gold"] += reward_gold
+                    add_exp(reward_exp)
+
+                    drop_roll = random.random()
+                    dropped_item = active_boss["legendary_drop"]
+                    
+                    if drop_roll <= active_boss["drop_rate"]:
+                        if dropped_item not in d["inventory"] and dropped_item not in d["equipped_items"]:
+                            d["inventory"].append(dropped_item)
+                            st.success(f"🎁 LEGENDARY DROP! Nauval mendapatkan: **{dropped_item}**!")
+                        else:
+                            d["gold"] += 400
+                            st.info(f"🎁 Drop {dropped_item} sudah dimiliki! Diganti bonus +400 Gold!")
+
+                    d["boss_max_hp"] = int(d["boss_max_hp"] * 1.4)
+                    d["boss_hp"] = d["boss_max_hp"]
+                    st.success(f"🔥 VICTORY! Boss dikalahkan! +{reward_gold} Gold & +{reward_exp} EXP!")
+                
+                save_game()
+                st.rerun()
+            else:
+                st.warning("Stamina kurang!")
+
+    with col_b:
+        if "💣 Procrastination Bomb" in d["inventory"]:
+            if st.button("💣 Lempar Bomb (-250 HP)", use_container_width=True):
+                d["inventory"].remove("💣 Procrastination Bomb")
+                d["boss_hp"] = max(0, d["boss_hp"] - 250)
+                st.success("💣 Bomb meledak memberikan 250 Damage langsung!")
+                
+                if d["boss_hp"] <= 0:
+                    d["boss_defeated_count"] += 1
+                    d["gold"] += 250
+                    add_exp(350)
+                    d["boss_max_hp"] = int(d["boss_max_hp"] * 1.4)
+                    d["boss_hp"] = d["boss_max_hp"]
+                    st.balloons()
+                
+                save_game()
+                st.rerun()
         else:
-            st.warning("Stamina tidak mencukupi!")
+            st.caption("💣 Butuh Bomb dari Shop")
 
+    with col_c:
+        if st.button("🧪 Gunakan Mega Elixir", use_container_width=True):
+            if "🧪 Mega Elixir" in d["inventory"]:
+                d["inventory"].remove("🧪 Mega Elixir")
+                d["hp"] = d["max_hp"]
+                d["stamina"] = d["max_stamina"]
+                st.success("HP & Stamina pulih 100% dari Mega Elixir!")
+                save_game()
+                st.rerun()
+            else:
+                st.warning("Tidak punya Mega Elixir di Inventory!")
 # ================= TAB 4: PENALTY =================
 with tab_penalty:
     st.subheader("🚨 Fitur Hukuman Pelanggaran")
