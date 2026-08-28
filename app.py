@@ -476,6 +476,10 @@ tab_quest, tab_skill, tab_boss, tab_penalty, tab_shop, tab_equips, tab_gacha, ta
 with tab_quest:
     st.subheader("📌 Misi Kedisiplinan Harian")
     
+    # --- INFO BAR STAMINA & STATS USER ---
+    st.info(f"⚡ Stamina Saat Ini: **{d['stamina']} / {d['max_stamina']}** | ❤️ HP: **{d['hp']} / {d['max_hp']}**")
+    st.divider()
+    
     # --- QUEST 1: BELAJAR ---
     with st.expander("📚 1. Sesi Belajar & Skill", expanded=True):
         study_hours = st.number_input("Berapa jam belajar hari ini?", min_value=0.5, max_value=12.0, value=1.0, step=0.5)
@@ -487,6 +491,11 @@ with tab_quest:
         # Skill Notes Keeper & Gold Digger
         extra_gold_notes = int(study_hours * 5) if d["skills"]["notes_keeper"] > 0 else 0
         gold_gained = int((study_hours * 25 + extra_gold_notes) * streak_bonus_mult)
+        exp_preview = int(study_hours * 100)
+        if d["skills"]["hyperfocus"] > 0 and study_hours >= 2.0:
+            exp_preview = int(exp_preview * 1.3)
+
+        st.caption(f"ℹ️ **Info Kebutuhan:** Membutuhkan ⚡ **{stamina_cost} Stamina** | Reward: 🪙 **+{gold_gained} Gold** | ✨ **+{exp_preview} EXP**")
 
         if st.button(f"🚀 Selesaikan Belajar ({study_hours} Jam)", use_container_width=True):
             if d["stamina"] >= stamina_cost:
@@ -509,9 +518,10 @@ with tab_quest:
                 add_exp(exp_earned, "INT", int(study_hours * 2))
                 log_activity("Belajar (Jam)", study_hours)
                 st.success(f"Selesai Belajar! (+{gold_gained} Gold)")
+                save_game()
                 st.rerun()
             else:
-                st.warning("Stamina tidak cukup!")
+                st.warning(f"❌ Stamina tidak cukup! Kamu butuh {stamina_cost} Stamina (Sisa: {d['stamina']}). Gunakan Espresso Shot atau Istirahat!")
 
     # --- QUEST 2: WORKOUT ---
     with st.expander("🏋️ 2. Workout & Olahraga"):
@@ -526,6 +536,9 @@ with tab_quest:
         cost_work = max(5, cost_work)
 
         gold_gained_work = int(workout_mins * 0.6 * streak_bonus_mult)
+        exp_work_preview = int(workout_mins * 2.5)
+
+        st.caption(f"ℹ️ **Info Kebutuhan:** Membutuhkan ⚡ **{cost_work} Stamina** | Reward: 🪙 **+{gold_gained_work} Gold** | 💪 **+{exp_work_preview} EXP (STR)**")
 
         if st.button(f"🏋️ Selesaikan Workout ({workout_mins} Mnt)", use_container_width=True):
             if d["stamina"] >= cost_work:
@@ -540,9 +553,10 @@ with tab_quest:
                 add_exp(int(workout_mins * 2.5), "STR", max(1, int(workout_mins / 20)))
                 log_activity("Workout (Menit)", workout_mins)
                 st.success(f"Workout Selesai! (+{gold_gained_work} Gold)")
+                save_game()
                 st.rerun()
             else:
-                st.warning("Stamina tidak cukup!")
+                st.warning(f"❌ Stamina tidak cukup! Kamu butuh {cost_work} Stamina (Sisa: {d['stamina']}).")
 
     # --- QUEST 3: BERIBADAH & SPIRITUAL ---
     with st.expander("🕌 3. Ibadah & Spiritual Quest"):
@@ -551,6 +565,9 @@ with tab_quest:
             "Membaca Kitab Suci / Meditasi 15 Mnt (+40 EXP, +20 Gold)",
             "Amalan Sunnah / Kebajikan Harian (+50 EXP, +30 Gold)"
         ])
+        
+        st.caption("ℹ️ **Info Kebutuhan:** Misi Spiritual **0 Stamina** (Gratis & Memulihkan Jiwa)")
+
         if st.button("🤲 Selesaikan Ibadah", use_container_width=True):
             if "5 Waktu" in worship_type:
                 exp_g, gold_g = 30, 15
@@ -564,17 +581,19 @@ with tab_quest:
             add_exp(exp_g, "VIT", 1)
             log_activity("Ibadah", 1)
             st.success(f"Alhamdulillah / Selesai! (+{exp_g} EXP, +{int(gold_g * streak_bonus_mult)} Gold)")
+            save_game()
             st.rerun()
 
     # --- QUEST 4: MINUM AIR ---
     with st.expander("💧 4. Asupan Air Minum Harian"):
         st.write(f"Konsumsi Air Saat Ini: **{d['water_ml']} / 2000 ml**")
         st.progress(min(d['water_ml'] / 2000, 1.0))
+        st.caption("ℹ️ Target Harian: Minum minimal 2000ml untuk mendapatkan bonus +50 EXP & +1 VIT.")
         
         c_w1, c_w2, c_w3 = st.columns(3)
         if c_w1.button("+ 250 ml (Gelas)"):
             d["water_ml"] += 250
-            if d["water_ml"] >= 2000:
+            if d["water_ml"] >= 2000 and d["water_ml"] - 250 < 2000:
                 add_exp(50, "VIT", 1)
                 st.balloons()
                 st.success("💧 Target Air 2000ml Tercapai! (+50 EXP, +1 VIT)")
@@ -582,7 +601,7 @@ with tab_quest:
             st.rerun()
         if c_w2.button("+ 600 ml (Botol)"):
             d["water_ml"] += 600
-            if d["water_ml"] >= 2000:
+            if d["water_ml"] >= 2000 and d["water_ml"] - 600 < 2000:
                 add_exp(50, "VIT", 1)
                 st.balloons()
                 st.success("💧 Target Air 2000ml Tercapai! (+50 EXP, +1 VIT)")
@@ -595,15 +614,17 @@ with tab_quest:
 
     # --- INSTANT ITEM ---
     with st.expander("📜 5. Gunakan Instant Scroll Item"):
+        st.caption("Gunakan item spesial dari Inventory untuk menyelesaikan misi secara instan tanpa menguras stamina.")
         if "📜 Scroll of Instant Focus" in d["inventory"]:
             if st.button("⚡ Gunakan Scroll Instant Focus", use_container_width=True):
                 d["inventory"].remove("📜 Scroll of Instant Focus")
                 add_exp(150, "INT", 2)
-                st.success("Quest diselesaikan instant tanpa menguras stamina!")
+                d["gold"] += 50
+                st.success("✨ Quest berhasil diselesaikan secara instan tanpa menguras stamina! (+150 EXP, +50 Gold)")
+                save_game()
                 st.rerun()
         else:
-            st.caption("Kamu tidak memiliki Scroll of Instant Focus. Beli di Toko Shop!")
-
+            st.warning("⚠️ Kamu tidak memiliki 'Scroll of Instant Focus' di Inventory. Silakan beli terlebih dahulu di Toko Shop!")
 # ================= TAB 2: SKILL TREE =================
 with tab_skill:
     st.subheader("🌳 Skill Tree (Perluasan Cabang Keterampilan)")
