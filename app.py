@@ -920,3 +920,139 @@ with tab_analytics:
         st.bar_chart(df, x="date", y="value", color="activity")
     else:
         st.info("Belum ada data aktivitas.")
+# ==========================================
+# 🧱 MODUL KOMPLEKS TAMBAHAN (EXTENSIONS)
+# ==========================================
+
+# 1. INITIALIZATION & HELPER UNTUK FITUR BARU
+if "tower_floor" not in d:
+    d["tower_floor"] = 1
+if "gem_inventory" not in d:
+    d["gem_inventory"] = []
+if "equipment_gems" not in d:
+    d["equipment_gems"] = {}
+if "active_debuffs" not in d:
+    d["active_debuffs"] = []
+if "random_event_active" not in d:
+    d["random_event_active"] = None
+
+# Cek Debuff Burnout jika HP dibawah 20%
+if (d["hp"] / d["max_hp"]) < 0.2 and "🔥 Burnout / Injured" not in d["active_debuffs"]:
+    d["active_debuffs"].append("🔥 Burnout / Injured")
+elif (d["hp"] / d["max_hp"]) >= 0.2 and "🔥 Burnout / Injured" in d["active_debuffs"]:
+    d["active_debuffs"].remove("🔥 Burnout / Injured")
+
+# 2. RENDER TAB-TAB KOMPLEKS BARU
+st.divider()
+st.header("⚡ Sistem Lanjutan & Modul Kompleks")
+
+tab_tower, tab_event, tab_craft, tab_debuff = st.tabs([
+    "🏰 Tower of Discipline", "🎴 Event Cards", "💎 Gem Crafting", "⚠️ Status & Debuff"
+])
+
+# --- TAB A: TOWER OF DISCIPLINE (50 FLOORS) ---
+with tab_tower:
+    st.subheader(f"🏰 Tower of Discipline — Lantai {d['tower_floor']} / 50")
+    
+    req_study = d["tower_floor"] * 2.0
+    req_level = d["tower_floor"] * 1
+    
+    st.write(f"**Syarat Menembus Lantai {d['tower_floor']}:**")
+    st.write(f"• Total Jam Belajar Kumulatif: **{d['total_study_hours']} / {req_study} Jam**")
+    st.write(f"• Level Karakter: **{d['level']} / {req_level}**")
+
+    can_pass = (d['total_study_hours'] >= req_study) and (d['level'] >= req_level)
+    
+    if can_pass:
+        st.success("✅ Seluruh syarat terpenuhi! Nauval siap menaklukkan lantai ini.")
+        if st.button(f"⚔️ Taklukkan Lantai {d['tower_floor']}", use_container_width=True):
+            d["tower_floor"] += 1
+            reward_gold = d["tower_floor"] * 50
+            reward_exp = d["tower_floor"] * 100
+            d["gold"] += reward_gold
+            add_exp(reward_exp)
+            st.balloons()
+            st.success(f"🎉 Lantai ditaklukkan! Hadiah: +{reward_gold} Gold, +{reward_exp} EXP!")
+            save_game()
+            st.rerun()
+    else:
+        st.warning("🔒 Syarat belum terpenuhi. Tingkatkan level dan durasi belajar untuk naik lantai!")
+
+# --- TAB B: RANDOM EVENT CARDS ---
+with tab_event:
+    st.subheader("🎴 Random Encounter & Event Cards")
+    
+    if st.button("🎲 Tarik Kartu Event Acak (-10 Stamina)", use_container_width=True):
+        if d["stamina"] >= 10:
+            d["stamina"] -= 10
+            events_pool = [
+                {"title": "📚 Menemukan Buku Kuno", "desc": "Membacanya memberi +80 INT EXP tapi menghabiskan waktu.", "exp": 80, "gold": 0, "hp": 0},
+                {"title": "💰 Peti Harta Karun", "desc": "Peti tersembunyi berisi koin emas!", "exp": 0, "gold": 120, "hp": 0},
+                {"title": "⚠️ Jebakan Buruk", "desc": "Terdistraksi oleh godaan! HP berkurang.", "exp": 0, "gold": 0, "hp": -15},
+                {"title": "🥗 Makanan Bergizi", "desc": "Menemukan porsi nutrisi tinggi. Memulihkan HP!", "exp": 0, "gold": 0, "hp": 25}
+            ]
+            d["random_event_active"] = random.choice(events_pool)
+            save_game()
+        else:
+            st.warning("Stamina tidak cukup!")
+
+    if d["random_event_active"]:
+        ev = d["random_event_active"]
+        st.info(f"**{ev['title']}**\n\n{ev['desc']}")
+        if st.button("Klaim Hasil Event", key="claim_ev"):
+            if ev["exp"] > 0: add_exp(ev["exp"])
+            if ev["gold"] > 0: d["gold"] += ev["gold"]
+            if ev["hp"] != 0: 
+                d["hp"] = max(0, min(d["max_hp"], d["hp"] + ev["hp"]))
+            d["random_event_active"] = None
+            save_game()
+            st.rerun()
+
+# --- TAB C: GEM CRAFTING & SOCKETING ---
+with tab_craft:
+    st.subheader("💎 Equipment Gem Crafting")
+    st.caption("Gabungkan 100 Gold untuk membuat Gem statistik pasif permanen!")
+
+    c_g1, c_g2 = st.columns(2)
+    with c_g1:
+        st.markdown("**Crafting Gem Baru**")
+        if st.button("🔨 Craft Random Gem (100 Gold)", use_container_width=True):
+            if d["gold"] >= 100:
+                d["gold"] -= 100
+                gem_type = random.choice(["💎 Ruby (+5 STR)", "🔷 Sapphire (+5 INT)", "🟢 Emerald (+5 VIT)"])
+                d["gem_inventory"].append(gem_type)
+                save_game()
+                st.success(f"Berhasil membuat **{gem_type}**!")
+                st.rerun()
+            else:
+                st.warning("Gold tidak cukup!")
+
+    with c_g2:
+        st.markdown("**Inventory Gem Milikmu**")
+        if d["gem_inventory"]:
+            for gem in d["gem_inventory"]:
+                st.write(f"• {gem}")
+        else:
+            st.caption("Belum memiliki Gem di dalam inventory.")
+
+# --- TAB D: STATUS DEBUFF & INJURY ---
+with tab_debuff:
+    st.subheader("⚠️ Status Kondisi Karakter")
+    
+    if d["active_debuffs"]:
+        for deb in d["active_debuffs"]:
+            st.error(f"🚨 Status Aktif: **{deb}** (Perolehan EXP & Gold berkurang 50% karena HP kritis!)")
+        
+        st.markdown("---")
+        st.write("🏥 **Sistem Pemulihan Istirahat (Rest & Recovery)**")
+        if st.button("💤 Lakukan Istirahat Total (+40 HP, -50 Gold)", use_container_width=True):
+            if d["gold"] >= 50:
+                d["gold"] -= 50
+                d["hp"] = min(d["max_hp"], d["hp"] + 40)
+                save_game()
+                st.success("Nauval telah beristirahat dan memulihkan kesehatan!")
+                st.rerun()
+            else:
+                st.warning("Gold tidak cukup untuk membeli obat pemulihan!")
+    else:
+        st.success("✅ Kondisi fisik & mental Nauval sangat prima! Tidak ada debuff aktif.")
