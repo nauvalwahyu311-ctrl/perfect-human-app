@@ -1056,3 +1056,101 @@ with tab_debuff:
                 st.warning("Gold tidak cukup untuk membeli obat pemulihan!")
     else:
         st.success("✅ Kondisi fisik & mental Nauval sangat prima! Tidak ada debuff aktif.")
+# ==========================================
+# 🛒 MODUL EXTENSION: SUPER EXPANDED SHOP & ARMORY
+# ==========================================
+
+st.divider()
+st.header("🛍️ Toko Pasar Gelap & Blacksmith Kerajaan")
+
+tab_potions_extra, tab_armory_extra, tab_relics = st.tabs([
+    "🧪 Potions & Elixirs Super", "⚔️ Senjata & Zirah Baru", "🔮 Relic & Artifact Kuno"
+])
+
+# --- TAB 1: CONSUMABLE POTIONS & ELIXIRS ---
+with tab_potions_extra:
+    st.subheader("🧪 Ramuan & Elixir Langka")
+    
+    extra_potions = [
+        {"name": "🧪 Mega Stamina Potion", "cost": 120, "type": "stamina", "val": 100, "desc": "Memulihkan 100 Stamina secara instan."},
+        {"name": "🧪 Elixir of Phoenix", "cost": 250, "type": "hp", "val": 100, "desc": "Memulihkan 100 HP secara penuh saat sekarat."},
+        {"name": "⚡ Hyper Coffee Shot", "cost": 85, "type": "stamina", "val": 60, "desc": "Espresso dosis tinggi (+60 Stamina)."},
+        {"name": "📜 Scroll of Double Gold", "cost": 175, "type": "item", "desc": "Mendapatkan 2x lipat Gold dari quest harian."},
+        {"name": "🧪 Potion of Pure Focus", "cost": 220, "type": "item", "desc": "Menghilangkan seluruh efek Debuff secara instan."},
+        {"name": "🍬 Candy of Speed", "cost": 50, "type": "stamina", "val": 25, "desc": "Permen peningkat energi ringan (+25 Stamina)."}
+    ]
+
+    for item in extra_potions:
+        c1, c2 = st.columns([3, 1])
+        c1.markdown(f"**{item['name']}** — 🪙 **{item['cost']} Gold**\n\n*{item['desc']}*")
+        if c2.button("Beli", key="ex_pot_"+item["name"]):
+            if d["gold"] >= item["cost"]:
+                d["gold"] -= item["cost"]
+                if item["type"] == "stamina":
+                    d["stamina"] = min(d["max_stamina"], d["stamina"] + item["val"])
+                    st.success(f"Berhasil diminum! +{item['val']} Stamina.")
+                elif item["type"] == "hp":
+                    d["hp"] = min(d["max_hp"], d["hp"] + item["val"])
+                    st.success(f"Berhasil diminum! +{item['val']} HP.")
+                elif item["type"] == "item":
+                    d["inventory"].append(item["name"])
+                    st.success(f"{item['name']} disimpan ke inventory!")
+                save_game()
+                st.rerun()
+            else:
+                st.warning("Gold tidak cukup!")
+
+# --- TAB 2: EXTRA ARMORY & EQUIPMENT ---
+with tab_armory_extra:
+    st.subheader("⚔️ Perlengkapan & Zirah Tempur")
+
+    extra_equips = [
+        {"name": "🛡️ Aegis Shield of Discipline", "cost": 450, "desc": "+30 Max HP & mengurangi damage hukuman sebesar 30%."},
+        {"name": "🗡️ Excalibur of Productivity", "cost": 600, "desc": "+50 Damage ekstra saat menyerang Boss RAID."},
+        {"name": "👑 Crown of Scholar King", "cost": 550, "desc": "+30% EXP ekstra dari setiap Sesi Belajar."},
+        {"name": "👢 Boots of Swiftness", "cost": 320, "desc": "Menghemat 35% stamina dari semua jenis quest."},
+        {"name": "🦺 Platinum Armor of Iron Will", "cost": 700, "desc": "+50 Max HP & Kebal terhadap status Debuff HP Rendah."}
+    ]
+
+    for eq in extra_equips:
+        c1, c2 = st.columns([3, 1])
+        c1.markdown(f"**{eq['name']}** — 🪙 **{eq['cost']} Gold**\n\n*{eq['desc']}*")
+        if eq["name"] in d["equipped_items"]:
+            c2.button("Terpasang ✅", key="ex_eq_"+eq["name"], disabled=True)
+        else:
+            if c2.button("Beli & Equip", key="ex_eq_"+eq["name"]):
+                if d["gold"] >= eq["cost"]:
+                    d["gold"] -= eq["cost"]
+                    d["equipped_items"].append(eq["name"])
+                    save_game()
+                    st.rerun()
+                else:
+                    st.warning("Gold tidak cukup!")
+
+# --- TAB 3: ANCIENT RELICS & ARTIFACTS ---
+with tab_relics:
+    st.subheader("🔮 Relic & Artefak Kuno (Permanen Buff)")
+
+    relics = [
+        {"name": "🔮 Orb of Infinite Wisdom", "cost": 850, "desc": "Meningkatkan seluruh perolehan EXP karakter sebesar 25% permanen."},
+        {"name": "🪙 Midas Golden Chalice", "cost": 1000, "desc": "Meningkatkan perolehan Gold dari semua quest sebesar 50% permanen."},
+        {"name": "🏺 Ancient Urn of Stamina", "cost": 750, "desc": "+50 Maksimum Stamina permanen secara instan."}
+    ]
+
+    for r in relics:
+        c1, c2 = st.columns([3, 1])
+        c1.markdown(f"**{r['name']}** — 🪙 **{r['cost']} Gold**\n\n*{r['desc']}*")
+        if r["name"] in d["equipped_items"]:
+            c2.button("Dimiliki 🔮", key="rel_"+r["name"], disabled=True)
+        else:
+            if c2.button("Klaim Relic", key="rel_"+r["name"]):
+                if d["gold"] >= r["cost"]:
+                    d["gold"] -= r["cost"]
+                    d["equipped_items"].append(r["name"])
+                    if r["name"] == "🏺 Ancient Urn of Stamina":
+                        d["max_stamina"] += 50
+                        d["stamina"] += 50
+                    save_game()
+                    st.rerun()
+                else:
+                    st.warning("Gold tidak cukup!")
