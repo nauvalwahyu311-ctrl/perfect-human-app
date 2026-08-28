@@ -793,15 +793,29 @@ with tab_penalty:
 with tab_shop:
     st.subheader("🧪 Toko Potion & Items")
     potions = [
+        # --- ITEM LAMA ---
         {"name": "☕ Espresso Shot", "cost": 45, "type": "instant_stamina", "val": 30, "desc": "+30 Stamina Instan"},
         {"name": "⚡ Vitality Potion", "cost": 60, "type": "instant_stamina", "val": 50, "desc": "+50 Stamina Instan"},
         {"name": "📜 Scroll of Instant Focus", "cost": 100, "type": "item", "desc": "Selesaikan 1 quest instant tanpa stamina."},
         {"name": "🛡️ Potion Kebal Penundaan", "cost": 180, "type": "item", "desc": "Tolak 1x hukuman sosmed otomatis."},
         {"name": "🍀 Clover of Luck", "cost": 200, "type": "buff", "duration": 24, "desc": "+25% Hoki Gacha Harian"},
         {"name": "🧪 Double EXP Elixir", "cost": 150, "type": "buff", "duration": 2, "desc": "2x EXP selama 2 Jam"},
-        {"name": "📜 Scroll of Oblivion", "cost": 300, "type": "respec", "desc": "Reset semua Skill Points untuk alokasi ulang."}
+        {"name": "📜 Scroll of Oblivion", "cost": 300, "type": "respec", "desc": "Reset semua Skill Points untuk alokasi ulang."},
+        
+        # --- ITEM TAMBAHAN BARU ---
+        {"name": "❤️ Health Potion", "cost": 50, "type": "instant_hp", "val": 40, "desc": "+40 HP Instan saat sekarat"},
+        {"name": "🧪 Mega Elixir", "cost": 150, "type": "instant_full", "desc": "Pulihkan HP & Stamina ke 100% Seketika"},
+        {"name": "🍎 Apple of Eden", "cost": 400, "type": "perm_stat", "stat": "INT", "val": 3, "desc": "+3 INT Permanen"},
+        {"name": "🥊 Titan Serum", "cost": 400, "type": "perm_stat", "stat": "STR", "val": 3, "desc": "+3 STR Permanen"},
+        {"name": "⚡ Hermes Feather", "cost": 400, "type": "perm_stat", "stat": "AGI", "val": 3, "desc": "+3 AGI Permanen"},
+        {"name": "🛡️ Heart of Iron", "cost": 400, "type": "perm_stat", "stat": "VIT", "val": 3, "desc": "+3 VIT Permanen"},
+        {"name": "👑 Elixir of Perfection", "cost": 700, "type": "perm_all_stat", "val": 2, "desc": "+2 All Stats Permanen"},
+        {"name": "📖 Tome of Knowledge", "cost": 350, "type": "direct_sp", "val": 1, "desc": "Langsung dapat +1 Skill Point (SP)"},
+        {"name": "✨ EXP Tonic", "cost": 120, "type": "direct_exp", "val": 250, "desc": "+250 EXP Instan"},
+        {"name": "💣 Procrastination Bomb", "cost": 220, "type": "boss_nuke", "val": 200, "desc": "Serang Boss langsung -200 HP"},
+        {"name": "⌛ Hourglass of Time", "cost": 250, "type": "instant_cd", "desc": "Reset seluruh cooldown skill aktif"}
     ]
-    
+
     # Skill Bargain Hunter Discount
     discount_mult = 0.9 if d["skills"]["bargain_hunter"] > 0 else 1.0
 
@@ -812,6 +826,8 @@ with tab_shop:
         if c2.button("Beli", key="shop_"+p["name"]):
             if d["gold"] >= final_cost:
                 d["gold"] -= final_cost
+                
+                # --- LOGIKA LAMA (TETAP DIJAGA) ---
                 if p["type"] == "instant_stamina":
                     rec_val = p["val"]
                     if p["name"] == "☕ Espresso Shot" and d["skills"]["coffee_efficiency"] > 0:
@@ -827,9 +843,33 @@ with tab_shop:
                     for k in d["skills"]: d["skills"][k] = 0
                     d["skill_points"] += total_points
                     st.success("Skill Points berhasil di-reset!")
+                
+                # --- LOGIKA TAMBAHAN UNTUK ITEM BARU ---
+                elif p["type"] == "instant_hp":
+                    d["hp"] = min(d["max_hp"], d["hp"] + p["val"])
+                elif p["type"] == "instant_full":
+                    d["hp"] = d["max_hp"]
+                    d["stamina"] = d["max_stamina"]
+                elif p["type"] == "perm_stat":
+                    d["stats"][p["stat"]] += p["val"]
+                elif p["type"] == "perm_all_stat":
+                    for st_k in d["stats"]:
+                        d["stats"][st_k] += p["val"]
+                elif p["type"] == "direct_sp":
+                    d["skill_points"] += p["val"]
+                elif p["type"] == "direct_exp":
+                    add_exp(p["val"])
+                elif p["type"] == "boss_nuke":
+                    d["boss_hp"] = max(0, d["boss_hp"] - p["val"])
+                elif p["type"] == "instant_cd":
+                    for sk_cd in d["active_skills_cd"]:
+                        d["active_skills_cd"][sk_cd] = 0
+
                 save_game()
                 st.success(f"Berhasil membeli {p['name']}!")
                 st.rerun()
+            else:
+                st.error("Gold tidak cukup!")
 
 # ================= TAB 6: ARMORY =================
 with tab_equips:
