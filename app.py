@@ -39,7 +39,6 @@ default_data = {
     "boss_hp": 500,
     "boss_max_hp": 500,
     "boss_name": "👾 Procrastination Demon",
-    # Data Baru Fitur 1-5
     "equipped_items": [],
     "last_gacha_date": "",
     "active_pet": "Tidak Ada",
@@ -47,16 +46,12 @@ default_data = {
     "activity_log": []
 }
 
-# Inisialisasi Data Karakter & Auto-Fix Struktur Data
+# Inisialisasi Data Karakter
 if "data" not in st.session_state:
     if os.path.exists("save_data.json"):
         try:
             with open("save_data.json", "r") as f:
-                loaded_data = json.load(f)
-                for key, val in default_data.items():
-                    if key not in loaded_data:
-                        loaded_data[key] = val
-                st.session_state.data = loaded_data
+                st.session_state.data = json.load(f)
         except:
             st.session_state.data = default_data
     else:
@@ -64,8 +59,12 @@ if "data" not in st.session_state:
 
 d = st.session_state.data
 
+# Safety Check: Memastikan semua key baru selalu ada di session_state
+for key, val in default_data.items():
+    if key not in d:
+        d[key] = val
+
 def play_sfx(audio_type):
-    # Fitur 5: Sound Effects via Web Audio API
     sounds = {
         "level_up": "https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3",
         "attack": "https://assets.mixkit.co/active_storage/sfx/2764/2764-preview.mp3",
@@ -83,7 +82,6 @@ def save_game():
         json.dump(d, f)
 
 def log_activity(activity_name, value):
-    # Fitur 4: Histori Log untuk Analytics Chart
     today_str = str(date.today())
     d["activity_log"].append({"date": today_str, "activity": activity_name, "value": value})
 
@@ -100,7 +98,6 @@ def add_exp(amount, stat_type=None, stat_gain=1):
         amount *= 2
         st.info("✨ Buff Double EXP Aktif! EXP dilipatgandakan.")
 
-    # Check Equipment Bonus EXP (Fitur 1)
     if "👓 Glasses of Wisdom" in d["equipped_items"] and stat_type == "INT":
         amount = int(amount * 1.1)
         st.info("👓 Glasses of Wisdom memberi bonus +10% EXP!")
@@ -133,7 +130,6 @@ def apply_penalty(hp_loss, exp_loss):
         st.warning("🛡️ Focus Shield melindungi Nauval dari hukuman!")
         return
 
-    # Check Equipment Mitigation (Fitur 1)
     if "🛡️ Shield of Iron Will" in d["equipped_items"]:
         hp_loss = int(hp_loss * 0.8)
         exp_loss = int(exp_loss * 0.8)
@@ -287,7 +283,6 @@ with tab_boss:
     
     st.progress(max(0.0, min(d["boss_hp"] / d["boss_max_hp"], 1.0)), text=f"HP Boss: {d['boss_hp']} / {d['boss_max_hp']}")
 
-    # Check Base Damage & Pet / Equipment Boost
     base_damage = d["stats"]["STR"] * 2 + d["stats"]["INT"] * 2
     if "🗡️ Steel Sword of Focus" in d["equipped_items"]:
         base_damage = int(base_damage * 1.15)
@@ -307,7 +302,6 @@ with tab_boss:
                 st.success(f"🔥 VICTORY! Nauval telah mengalahkan {d['boss_name']}! (+250 EXP, +100 Gold)")
                 d["gold"] += 100
                 add_exp(250)
-                # Respawn Boss Baru
                 d["boss_max_hp"] = int(d["boss_max_hp"] * 1.4)
                 d["boss_hp"] = d["boss_max_hp"]
                 if d["boss_name"] == "👾 Procrastination Demon":
