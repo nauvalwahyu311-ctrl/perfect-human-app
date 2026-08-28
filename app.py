@@ -739,7 +739,7 @@ with tab_skill:
             st.success("Titan Form Aktif!")
             st.rerun()
 
-# ================= TAB 3: BOSS RAID (WITH INTERACTIVE EQUIP/UNEQUIP INVENTORY) =================
+# ================= TAB 3: BOSS RAID (FIXED INVENTORY DUPLICATION & DAMAGE BUG) =================
 with tab_boss:
     import random
 
@@ -833,9 +833,16 @@ with tab_boss:
     if "battle_logs" not in st.session_state:
         st.session_state["battle_logs"] = ["Dungeon raid dibuka. Bersiaplah bertempur, Nauval!"]
 
-    # Pastikan key 'equipped_items' ada di dictionary game state (d)
+    # Inisialisasi struktur data aman & bersih dari duplikasi silang
     if "equipped_items" not in d:
         d["equipped_items"] = []
+    if "inventory" not in d:
+        d["inventory"] = []
+
+    # Pastikan item yang sudah di-equip TIDAK ADA di dalam inventory secara bersamaan
+    for eq in d["equipped_items"]:
+        while eq in d["inventory"]:
+            d["inventory"].remove(eq)
 
     # --- UI HEADER & INFO BOSS ---
     st.subheader(f"⚔️ Dungeon RAID Mingguan: {d['boss_name']}")
@@ -855,7 +862,7 @@ with tab_boss:
     hp_percentage = max(0.0, min(d["boss_hp"] / d["boss_max_hp"], 1.0))
     st.progress(hp_percentage, text=f"🔴 HP Boss: {d['boss_hp']} / {d['boss_max_hp']} ({int(hp_percentage * 100)}%)")
 
-    # --- PERHITUNGAN DAMAGE & BONUS ---
+    # --- PERHITUNGAN DAMAGE & BONUS (HANYA MENGHITUNG DARI EQUIPPED_ITEMS) ---
     stat_bonus = d["stats"][active_boss["weakness"]] * 3
     base_damage = d["stats"]["STR"] * 2 + d["stats"]["INT"] * 2 + stat_bonus
 
@@ -864,14 +871,15 @@ with tab_boss:
     if d["skills"]["adrenaline_rush"] > 0 and (d["hp"] / d["max_hp"]) < 0.3:
         base_damage = int(base_damage * 1.5)
 
-    all_owned_gear = d["equipped_items"] + d["inventory"]
+    # PENTING: Perhitungan buff damage MURNI berasal dari item yang sedang di-equip saja!
+    active_gear = d["equipped_items"]
     
-    if "🗡️ Steel Sword of Focus" in all_owned_gear: base_damage = int(base_damage * 1.15)
-    if "🗡️ Excalibur of Focus" in all_owned_gear: base_damage = int(base_damage * 1.50)
-    if "🛡️ Aegis Shield of Willpower" in all_owned_gear: base_damage = int(base_damage * 1.30)
-    if "👑 Crown of Unstoppable Discipline" in all_owned_gear: base_damage = int(base_damage * 1.75)
-    if "⚔️ Scythe of Zero Delay" in all_owned_gear: base_damage = int(base_damage * 2.00)
-    if "🔥 Armor of the Overlord" in all_owned_gear: base_damage = int(base_damage * 2.50)
+    if "🗡️ Steel Sword of Focus" in active_gear: base_damage = int(base_damage * 1.15)
+    if "🗡️ Excalibur of Focus" in active_gear: base_damage = int(base_damage * 1.50)
+    if "🛡️ Aegis Shield of Willpower" in active_gear: base_damage = int(base_damage * 1.30)
+    if "👑 Crown of Unstoppable Discipline" in active_gear: base_damage = int(base_damage * 1.75)
+    if "⚔️ Scythe of Zero Delay" in active_gear: base_damage = int(base_damage * 2.00)
+    if "🔥 Armor of the Overlord" in active_gear: base_damage = int(base_damage * 2.50)
 
     if d["active_pet"] == "🐺 Spirit Wolf": base_damage += 25
     elif d["active_pet"] == "🐲 Baby Dragon": base_damage = int(base_damage * 1.20)
@@ -881,7 +889,7 @@ with tab_boss:
         base_damage *= 4
 
     crit_chance = min(0.60, d["stats"]["AGI"] * 0.025)
-    if "🔮 Orb of Absolute Clarity" in all_owned_gear:
+    if "🔮 Orb of Absolute Clarity" in active_gear:
         crit_chance += 0.40 
     
     is_crit = random.random() < crit_chance
@@ -934,13 +942,14 @@ with tab_boss:
                     drop_roll = random.random()
                     dropped_item = active_boss["legendary_drop"]
                     
+                    all_existing_items = d["inventory"] + d["equipped_items"]
                     if drop_roll <= active_boss["drop_rate"]:
-                        if dropped_item not in d["inventory"] and dropped_item not in d["equipped_items"]:
+                        if dropped_item not in all_existing_items:
                             d["inventory"].append(dropped_item)
                             drop_msg = f"🎁 LEGENDARY DROP! Nauval mendapatkan: **{dropped_item}**!"
                             st.session_state["battle_logs"].insert(0, drop_msg)
                             st.success(drop_msg)
-                            st.info(f"✨ Item masuk ke tas inventory. Silakan pasang (*equip*) dari tab rincian item!")
+                            st.info(f"✨ Item masuk ke tas inventory. Silakan pasang (*equip*) dari tab manajemen item!")
                         else:
                             d["gold"] += 400
                             dup_msg = f"🎁 Drop {dropped_item} sudah dimiliki! Ditukar bonus +400 Gold."
@@ -997,7 +1006,7 @@ with tab_boss:
 
     st.markdown("---")
 
-    # --- FITUR TAMBAHAN: LIVE COMBAT LOG & DETAIL INVENTORI DENGAN TOMBOL EQUIP/UNEQUIP ---
+    # --- FITUR TAMBAHAN: LIVE COMBAT LOG & MANAJEMEN ITEM AMAN ---
     tab_log, tab_collection = st.tabs(["📜 Live Battle Log", "🛡️ Rincian & Manajemen Efek Item"])
     
     with tab_log:
@@ -1026,6 +1035,7 @@ with tab_boss:
             "🔥 Armor of the Overlord": "Memberikan 2.5x Lipat Damage murni & proteksi kekebalan mutlak dari kekalahan."
         }
 
+        # Gabungkan item unik dari kedua list secara bersih tanpa duplikat ganda
         unique_owned_items = list(set(d["inventory"] + d["equipped_items"]))
 
         if unique_owned_items:
@@ -1044,13 +1054,14 @@ with tab_boss:
                     with col_item2:
                         st.markdown(f"*Efek:* {effect_explanation}")
                     with col_item3:
-                        # Logika tombol interaktif Pakai / Lepas
                         if not is_equipped:
-                            # Jangan beri tombol equip untuk item consumable seperti Bomb & Elixir
                             if item not in ["💣 Procrastination Bomb", "🧪 Mega Elixir"]:
                                 if st.button("🟢 Pakai", key=f"equip_{item}", use_container_width=True):
-                                    d["inventory"].remove(item)
-                                    d["equipped_items"].append(item)
+                                    # Pindahkan item secara bersih: hapus dari inventory, masukkan ke equipped
+                                    if item in d["inventory"]:
+                                        d["inventory"].remove(item)
+                                    if item not in d["equipped_items"]:
+                                        d["equipped_items"].append(item)
                                     save_game()
                                     st.success(f"Berhasil memakai {item}!")
                                     st.rerun()
@@ -1058,8 +1069,11 @@ with tab_boss:
                                 st.caption("Gunakan langsung di panel aksi")
                         else:
                             if st.button("🔴 Lepas", key=f"unequip_{item}", use_container_width=True):
-                                d["equipped_items"].remove(item)
-                                d["inventory"].append(item)
+                                # Pindahkan item secara bersih: hapus dari equipped, masukkan ke inventory
+                                if item in d["equipped_items"]:
+                                    d["equipped_items"].remove(item)
+                                if item not in d["inventory"]:
+                                    d["inventory"].append(item)
                                 save_game()
                                 st.warning(f"Berhasil melepas {item}!")
                                 st.rerun()
