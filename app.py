@@ -945,12 +945,86 @@ with tab_achieve:
     
     st.write(f"📅 Status Minggu Ini: **{d['last_weekly_reset']}**")
     st.divider()
-    
+
+    # --- DAFTAR SELURUH ACHIEVEMENTS DALAM GAME ---
+    all_achievements = [
+        # PERMANENT TARGETS (ACADEMIC & STUDY)
+        {"name": "📚 Bookworm Master", "desc": "Total belajar mencapai 10 jam", "req_type": "study", "req_val": 10.0, "reward": 100},
+        {"name": "🎓 Scholar Legend", "desc": "Total belajar mencapai 50 jam", "req_type": "study", "req_val": 50.0, "reward": 300},
+        {"name": "🏛️ Grand Academician", "desc": "Total belajar mencapai 100 jam", "req_type": "study", "req_val": 100.0, "reward": 500},
+        
+        # PERMANENT TARGETS (STREAK & DISCIPLINE)
+        {"name": "🔥 Iron Warrior (7 Days Streak)", "desc": "Pertahankan streak selama 7 hari berturut-turut", "req_type": "streak", "req_val": 7, "reward": 150},
+        {"name": "⚡ Unstoppable Force (14 Days Streak)", "desc": "Pertahankan streak selama 14 hari berturut-turut", "req_type": "streak", "req_val": 14, "reward": 300},
+        {"name": "👑 Emperor of Consistency (30 Days Streak)", "desc": "Pertahankan streak selama 30 hari berturut-turut", "req_type": "streak", "req_val": 30, "reward": 1000},
+        
+        # PERMANENT TARGETS (DUNGEON & BOSS)
+        {"name": "⚔️ Demon Slayer Elite", "desc": "Kalahkan Boss Raid sebanyak 5 kali", "req_type": "boss", "req_val": 5, "reward": 200},
+        {"name": "🐲 Dragon Vanquisher", "desc": "Kalahkan Boss Raid sebanyak 15 kali", "req_type": "boss", "req_val": 15, "reward": 500},
+        
+        # PERMANENT TARGETS (SPIRITUAL & STATS)
+        {"name": "🕌 Spiritual Devotee", "desc": "Selesaikan 10 kali ibadah/refleksi", "req_type": "worship", "req_val": 10, "reward": 100},
+        {"name": "🌟 Saint of Light", "desc": "Selesaikan 50 kali ibadah/refleksi", "req_type": "worship", "req_val": 50, "reward": 400},
+        {"name": "💪 Hercules Candidate", "desc": "Miliki Stat STR minimal 50", "req_type": "stat_str", "req_val": 50, "reward": 250},
+        {"name": "🧠 Mastermind Genius", "desc": "Miliki Stat INT minimal 50", "req_type": "stat_int", "req_val": 50, "reward": 250},
+
+        # PERMANENT TARGETS (LEVEL & ECONOMY)
+        {"name": "🌟 Rising Star", "desc": "Capai Karakter Level 5", "req_type": "level", "req_val": 5, "reward": 100},
+        {"name": "🛡️ Veteran Adventurer", "desc": "Capai Karakter Level 15", "req_type": "level", "req_val": 15, "reward": 300},
+        {"name": "👑 Perfect Human Ascended", "desc": "Capai Karakter Level 30", "req_type": "level", "req_val": 30, "reward": 1000},
+        {"name": "💰 Gold Hoarder", "desc": "Kumpulkan 1,000 Total Gold", "req_type": "gold", "req_val": 1000, "reward": 200},
+        {"name": "💎 Millionaire Mindset", "desc": "Kumpulkan 5,000 Total Gold", "req_type": "gold", "req_val": 5000, "reward": 800},
+
+        # WEEKLY TARGETS (RESET SETIAP MINGGU)
+        {"name": "🎯 Weekly Champion (Weekly Target)", "desc": "Selesaikan 5 quest harian dalam satu hari", "req_type": "quests_today", "req_val": 5, "reward": 150},
+        {"name": "📖 Weekly Scholar (Weekly Target)", "desc": "Belajar minimal 5 jam dalam minggu ini", "req_type": "study", "req_val": 5.0, "reward": 150},
+        {"name": "💧 Hydration Hero (Weekly Target)", "desc": "Minum air 2000ml dalam satu hari", "req_type": "water", "req_val": 2000, "reward": 100}
+    ]
+
+    # --- RINGKASAN PROGRESS & TERBUKA ---
+    unlocked_count = len(d["achievements"])
+    total_count = len(all_achievements)
+    st.write(f"📊 **Pencapaian Terbuka:** {unlocked_count} / {total_count} ({int((unlocked_count/total_count)*100)}%)")
+    st.progress(unlocked_count / total_count)
+    st.divider()
+
+    # --- LOGIKA LAMA (MENAMPILKAN ACHIEVEMENT TERBUKA) ---
+    st.markdown("### 🎉 Lencana yang Sudah Didapatkan")
     if d["achievements"]:
         for ach in d["achievements"]:
             st.success(f"🏆 Lencana Terbuka: **{ach}**")
     else:
         st.info("Belum ada Achievement yang didapatkan. Tingkatkan level dan quest harianmu!")
+
+    st.divider()
+
+    # --- LOGIKA TAMBAHAN (PROGRESS DAFTAR SELURUH ACHIEVEMENTS) ---
+    st.markdown("### 📜 Daftar Seluruh Misi Achievement & Progress")
+    for ach in all_achievements:
+        is_unlocked = ach["name"] in d["achievements"]
+        
+        # Hitung Nilai Current Progress
+        curr_val = 0
+        if ach["req_type"] == "study": curr_val = d["total_study_hours"]
+        elif ach["req_type"] == "streak": curr_val = d["streak"]
+        elif ach["req_type"] == "boss": curr_val = d["boss_defeated_count"]
+        elif ach["req_type"] == "worship": curr_val = d.get("total_worship_count", 0)
+        elif ach["req_type"] == "stat_str": curr_val = d["stats"]["STR"]
+        elif ach["req_type"] == "stat_int": curr_val = d["stats"]["INT"]
+        elif ach["req_type"] == "level": curr_val = d["level"]
+        elif ach["req_type"] == "gold": curr_val = d["gold"]
+        elif ach["req_type"] == "quests_today": curr_val = d["quests_done_today"]
+        elif ach["req_type"] == "water": curr_val = d["water_ml"]
+
+        pct = min(1.0, float(curr_val) / float(ach["req_val"]))
+        
+        # Tampilan Item Achievement
+        if is_unlocked:
+            st.caption(f"✅ **{ach['name']}** — *{ach['desc']}* (Hadiah: +{ach['reward']} Gold)")
+            st.progress(1.0)
+        else:
+            st.caption(f"🔒 **{ach['name']}** — *{ach['desc']}* ({curr_val}/{ach['req_val']}) — Hadiah: 🪙 {ach['reward']} Gold")
+            st.progress(pct)")
 
 # ================= TAB 10: ANALYTICS =================
 with tab_analytics:
