@@ -15,28 +15,39 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Inisialisasi Data Karakter & Sistem RPG
+# Default Structure Data Karakter
+default_data = {
+    "name": "Nauval",
+    "level": 1,
+    "exp": 0,
+    "exp_needed": 200,
+    "gold": 100,
+    "streak": 1,
+    "title": "🌱 Novice Initiate",
+    "hp": 100, "max_hp": 100,
+    "stamina": 100, "max_stamina": 100,
+    "stats": {"STR": 10, "INT": 10, "AGI": 10, "VIT": 10},
+    "water_ml": 0,
+    "quests_done_today": 0,
+    "inventory": [],
+    "journal": []
+}
+
+# Inisialisasi Data Karakter & Auto-Fix Struktur Data Lama
 if "data" not in st.session_state:
     if os.path.exists("save_data.json"):
-        with open("save_data.json", "r") as f:
-            st.session_state.data = json.load(f)
+        try:
+            with open("save_data.json", "r") as f:
+                loaded_data = json.load(f)
+                # Auto-repair jika ada key baru yang belum ada di save_data lama
+                for key, val in default_data.items():
+                    if key not in loaded_data:
+                        loaded_data[key] = val
+                st.session_state.data = loaded_data
+        except:
+            st.session_state.data = default_data
     else:
-        st.session_state.data = {
-            "name": "Nauval",
-            "level": 1,
-            "exp": 0,
-            "exp_needed": 200,
-            "gold": 100,
-            "streak": 1,
-            "title": "🌱 Novice Initiate",
-            "hp": 100, "max_hp": 100,
-            "stamina": 100, "max_stamina": 100,
-            "stats": {"STR": 10, "INT": 10, "AGI": 10, "VIT": 10},
-            "water_ml": 0,
-            "quests_done_today": 0,
-            "inventory": [],
-            "journal": []
-        }
+        st.session_state.data = default_data
 
 d = st.session_state.data
 
