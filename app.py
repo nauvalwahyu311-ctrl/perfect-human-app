@@ -1,7 +1,9 @@
 import streamlit as st
 import json
 import os
+import random
 from datetime import date, datetime
+import pandas as pd
 
 st.set_page_config(page_title="Perfect Human RPG", page_icon="🏰", layout="centered")
 
@@ -31,7 +33,18 @@ default_data = {
     "quests_done_today": 0,
     "inventory": [],
     "active_buffs": [],
-    "journal": []
+    "journal": [],
+    "main_goal": "Menjadi Versi Terbaik Diri Sendiri (Perfect Human)",
+    "goal_progress": 0,
+    "boss_hp": 500,
+    "boss_max_hp": 500,
+    "boss_name": "👾 Procrastination Demon",
+    # Data Baru Fitur 1-5
+    "equipped_items": [],
+    "last_gacha_date": "",
+    "active_pet": "Tidak Ada",
+    "pet_bonus": None,
+    "activity_log": []
 }
 
 # Inisialisasi Data Karakter & Auto-Fix Struktur Data
@@ -51,9 +64,28 @@ if "data" not in st.session_state:
 
 d = st.session_state.data
 
+def play_sfx(audio_type):
+    # Fitur 5: Sound Effects via Web Audio API
+    sounds = {
+        "level_up": "https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3",
+        "attack": "https://assets.mixkit.co/active_storage/sfx/2764/2764-preview.mp3",
+        "gacha": "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"
+    }
+    if audio_type in sounds:
+        st.components.v1.html(f"""
+            <audio autoplay style="display:none;">
+                <source src="{sounds[audio_type]}" type="audio/mpeg">
+            </audio>
+        """, height=0)
+
 def save_game():
     with open("save_data.json", "w") as f:
         json.dump(d, f)
+
+def log_activity(activity_name, value):
+    # Fitur 4: Histori Log untuk Analytics Chart
+    today_str = str(date.today())
+    d["activity_log"].append({"date": today_str, "activity": activity_name, "value": value})
 
 def update_title():
     if d["level"] >= 30: d["title"] = "👑 THE PERFECT HUMAN EMPEROR"
@@ -63,14 +95,20 @@ def update_title():
     else: d["title"] = "🌱 Novice Initiate"
 
 def add_exp(amount, stat_type=None, stat_gain=1):
-    # Cek apakah buff Double EXP aktif
     has_double_exp = any(b["name"] == "🧪 Double EXP Elixir" for b in d["active_buffs"])
     if has_double_exp:
         amount *= 2
         st.info("✨ Buff Double EXP Aktif! EXP dilipatgandakan.")
 
+    # Check Equipment Bonus EXP (Fitur 1)
+    if "👓 Glasses of Wisdom" in d["equipped_items"] and stat_type == "INT":
+        amount = int(amount * 1.1)
+        st.info("👓 Glasses of Wisdom memberi bonus +10% EXP!")
+
     d["exp"] += amount
     d["quests_done_today"] += 1
+    d["goal_progress"] = min(100, d["goal_progress"] + 1)
+    
     if stat_type and stat_type in d["stats"]:
         d["stats"][stat_type] += stat_gain
     
@@ -84,16 +122,22 @@ def add_exp(amount, stat_type=None, stat_gain=1):
         d["stamina"] = d["max_stamina"]
         d["gold"] += 50
         update_title()
+        play_sfx("level_up")
         st.balloons()
         st.success(f"🎉 LEVEL UP! Selamat Nauval naik ke Level {d['level']}! (+50 Gold, Stat Boost)")
     save_game()
 
 def apply_penalty(hp_loss, exp_loss):
-    # Cek apakah buff Shield aktif
     has_shield = any(b["name"] == "🛡️ Focus Shield Buff" for b in d["active_buffs"])
     if has_shield:
         st.warning("🛡️ Focus Shield melindungi Nauval dari hukuman!")
         return
+
+    # Check Equipment Mitigation (Fitur 1)
+    if "🛡️ Shield of Iron Will" in d["equipped_items"]:
+        hp_loss = int(hp_loss * 0.8)
+        exp_loss = int(exp_loss * 0.8)
+        st.info("🛡️ Shield of Iron Will mengurangi 20% dampak hukuman!")
 
     d["hp"] = max(0, d["hp"] - hp_loss)
     d["exp"] = max(0, d["exp"] - exp_loss)
@@ -102,7 +146,13 @@ def apply_penalty(hp_loss, exp_loss):
 
 # --- HEADER STATUS KARAKTER ---
 st.title(f"🏰 KETUA {d['name'].upper()}")
-st.caption(f"Gelar Kedisiplinan: **{d['title']}**")
+st.caption(f"Gelar Kedisiplinan: **{d['title']}** | Pet: **{d['active_pet']}**")
+
+# MAIN GOAL BAR
+st.subheader(f"🎯 Main Goal: {d['main_goal']}")
+st.progress(d["goal_progress"] / 100, text=f"Progres Tujuan Utama: {d['goal_progress']}%")
+
+st.divider()
 
 # Bar EXP
 st.progress(min(d["exp"] / d["exp_needed"], 1.0), text=f"EXP: {d['exp']} / {d['exp_needed']} (Level {d['level']})")
@@ -123,11 +173,13 @@ c2.metric("🔥 Streak", f"{d['streak']} Hr")
 c3.metric("💧 Air", f"{d['water_ml']} ml")
 c4.metric("⚔️ Quest", f"{d['quests_done_today']}")
 
-# Tampilan Buff Aktif
-if d["active_buffs"]:
-    st.write("✨ **Buff Aktif Saat Ini:**")
+# Tampilan Buff & Equipment Aktif
+if d["active_buffs"] or d["equipped_items"]:
+    st.write("✨ **Buff & Equipment Aktif:**")
     for buff in d["active_buffs"]:
         st.success(f"• **{buff['name']}** (Aktif s.d {buff['expires']})")
+    for eq in d["equipped_items"]:
+        st.info(f"🛡️ Equipment Dipakai: **{eq}**")
 
 # Detail Stats Atribut RPG
 with st.expander("📊 Lihat Atribut & Kekuatan Karakter (STR, INT, AGI, VIT)", expanded=True):
@@ -140,11 +192,16 @@ with st.expander("📊 Lihat Atribut & Kekuatan Karakter (STR, INT, AGI, VIT)", 
 st.divider()
 
 # --- TAB UTAMA APLIKASI ---
-tab_quest, tab_penalty, tab_shop, tab_journal = st.tabs([
-    "⚔️ Quest & Rutinitas", 
-    "🚨 Hukuman (Penalty)", 
-    "🧪 Alchemist Shop & Potion", 
-    "📓 Jurnal & Catatan"
+tab_quest, tab_boss, tab_penalty, tab_shop, tab_journal, tab_equips, tab_gacha, tab_pet, tab_analytics = st.tabs([
+    "⚔️ Quest & Rutinitas",
+    "👾 Boss & Dungeon", 
+    "🚨 Hukuman", 
+    "🧪 Toko Potion", 
+    "📓 Jurnal",
+    "🗡️ Equipment",
+    "🎡 Daily Gacha",
+    "🐾 Pet Companion",
+    "📈 Analytics"
 ])
 
 # ================= TAB 1: QUEST DENGAN CUSTOM DURASI =================
@@ -165,6 +222,7 @@ with tab_quest:
                 d["stamina"] -= stamina_cost_study
                 d["gold"] += gained_gold_study
                 add_exp(gained_exp_study, "INT", gained_int)
+                log_activity("Belajar (Jam)", study_hours)
                 st.success(f"Luar biasa! Belajar {study_hours} Jam selesai.")
                 st.rerun()
             else:
@@ -184,6 +242,7 @@ with tab_quest:
                 d["stamina"] -= stamina_cost_work
                 d["gold"] += gained_gold_work
                 add_exp(gained_exp_work, "STR", gained_str)
+                log_activity("Workout (Menit)", workout_mins)
                 st.success(f"Fisik semakin kuat! Workout {workout_mins} Mnt selesai.")
                 st.rerun()
             else:
@@ -198,6 +257,7 @@ with tab_quest:
 
         if st.button(f"📖 Selesaikan Membaca ({read_mins} Menit)", use_container_width=True):
             add_exp(gained_exp_read, "INT", gained_int_read)
+            log_activity("Membaca (Menit)", read_mins)
             st.success(f"Wawasan bertambah! Membaca {read_mins} Mnt selesai.")
             st.rerun()
 
@@ -220,7 +280,48 @@ with tab_quest:
             st.success("HP dan Stamina Nauval telah pulih sepenuhnya!")
             st.rerun()
 
-# ================= TAB 2: PENALTY DENGAN CUSTOM WAKTU =================
+# ================= TAB 2: BOSS & DUNGEON (SERANGAN MONSTER) =================
+with tab_boss:
+    st.subheader(f"⚔️ Dungeon RAID: {d['boss_name']}")
+    st.caption("Kalahkan monster rasa malas & penundaan untuk mendapatkan EXP & Gold melimpah!")
+    
+    st.progress(max(0.0, min(d["boss_hp"] / d["boss_max_hp"], 1.0)), text=f"HP Boss: {d['boss_hp']} / {d['boss_max_hp']}")
+
+    # Check Base Damage & Pet / Equipment Boost
+    base_damage = d["stats"]["STR"] * 2 + d["stats"]["INT"] * 2
+    if "🗡️ Steel Sword of Focus" in d["equipped_items"]:
+        base_damage = int(base_damage * 1.15)
+    if d["active_pet"] == "🐺 Spirit Wolf":
+        base_damage += 25
+
+    st.info(f"💥 Total Damage Serangan Nauval: **{base_damage} HP** (Bonus Equipment & Pet Termasuk)")
+
+    if st.button(f"⚔️ Serang {d['boss_name']} (-20 Stamina)", use_container_width=True):
+        if d["stamina"] >= 20:
+            play_sfx("attack")
+            d["stamina"] -= 20
+            d["boss_hp"] -= base_damage
+            if d["boss_hp"] <= 0:
+                play_sfx("level_up")
+                st.balloons()
+                st.success(f"🔥 VICTORY! Nauval telah mengalahkan {d['boss_name']}! (+250 EXP, +100 Gold)")
+                d["gold"] += 100
+                add_exp(250)
+                # Respawn Boss Baru
+                d["boss_max_hp"] = int(d["boss_max_hp"] * 1.4)
+                d["boss_hp"] = d["boss_max_hp"]
+                if d["boss_name"] == "👾 Procrastination Demon":
+                    d["boss_name"] = "🐉 Distraction Overlord"
+                else:
+                    d["boss_name"] = "👹 Chaos Lord of Laziness"
+            else:
+                st.success(f"Serangan berhasil! Memberikan {base_damage} damage ke Boss.")
+            save_game()
+            st.rerun()
+        else:
+            st.warning("Stamina Nauval tidak cukup untuk menyerang Boss!")
+
+# ================= TAB 3: PENALTY DENGAN CUSTOM WAKTU =================
 with tab_penalty:
     st.subheader("🚨 Fitur Hukuman Pelanggaran Kedisiplinan")
 
@@ -232,7 +333,7 @@ with tab_penalty:
         apply_penalty(lost_hp_sosmed, lost_exp_sosmed)
         st.rerun()
 
-# ================= TAB 3: TOKO POTION & BUFF =================
+# ================= TAB 4: TOKO POTION & BUFF =================
 with tab_shop:
     st.subheader("🧪 Toko Ramuan Magic & Buff Kedisiplinan")
     st.caption("Tukarkan Gold hasil kerja keras Nauval untuk membeli Potion berdurasi jam!")
@@ -260,7 +361,6 @@ with tab_shop:
                         d["hp"] = min(d["max_hp"], d["hp"] + p["val"])
                         st.success(f"Berhasil menggunakan {p['name']}! HP +{p['val']}")
                     elif p["type"] == "buff":
-                        now_str = datetime.now().strftime("%H:%M:%S")
                         d["active_buffs"].append({
                             "name": p["name"],
                             "expires": f"{p['duration']} Jam ke depan"
@@ -273,7 +373,7 @@ with tab_shop:
                     st.error("Gold Nauval tidak cukup!")
         st.divider()
 
-# ================= TAB 4: JURNAL & CATATAN =================
+# ================= TAB 5: JURNAL & CATATAN =================
 with tab_journal:
     st.subheader("📓 Jurnal Evaluation & Reflection")
     j_input = st.text_area("Tuliskan pencapaian, rasa syukur, atau evaluasi hari ini:")
@@ -289,3 +389,105 @@ with tab_journal:
     st.write("📜 **Riwayat Jurnal Nauval:**")
     for j in reversed(d["journal"][-5:]):
         st.info(f"📅 **{j['date']}**\n\n{j['note']}")
+
+# ================= TAB 6: FITUR 1 - EQUIPS & ARMORS =================
+with tab_equips:
+    st.subheader("🗡️ Armory & Equipment RPG")
+    st.caption("Gunakan perlengkapan permanen untuk meningkatkan performa karakter Nauval!")
+    
+    equips_list = [
+        {"name": "🗡️ Steel Sword of Focus", "cost": 250, "desc": "Menambah +15% Damage saat melawan Boss Dungeon."},
+        {"name": "🛡️ Shield of Iron Will", "cost": 200, "desc": "Mengurangi efek Hukuman (HP & EXP loss) sebesar 20%."},
+        {"name": "👓 Glasses of Wisdom", "cost": 180, "desc": "Bonus +10% EXP dari setiap Quest Belajar/Membaca."}
+    ]
+
+    for eq in equips_list:
+        with st.container():
+            col1, col2 = st.columns([3, 1])
+            col1.markdown(f"**{eq['name']}** — 🪙 **{eq['cost']} Gold**\n\n*{eq['desc']}*")
+            if eq["name"] in d["equipped_items"]:
+                col2.button("Terpasang ✅", key=eq["name"], disabled=True)
+            else:
+                if col2.button("Beli & Equip", key=eq["name"]):
+                    if d["gold"] >= eq["cost"]:
+                        d["gold"] -= eq["cost"]
+                        d["equipped_items"].append(eq["name"])
+                        save_game()
+                        st.success(f"Berhasil melengkapi {eq['name']}!")
+                        st.rerun()
+                    else:
+                        st.error("Gold tidak cukup!")
+        st.divider()
+
+# ================= TAB 7: FITUR 2 - DAILY GACHA =================
+with tab_gacha:
+    st.subheader("🎡 Roda Keberuntungan Harian (Daily Spin)")
+    today_str = str(date.today())
+    
+    if d["last_gacha_date"] == today_str:
+        st.info("⏰ Nauval sudah melakukan Spin hari ini. Kembali lagi besok!")
+    else:
+        st.write("Putar roda keberuntungan gratis 1x setiap hari untuk mendapatkan reward acak!")
+        if st.button("🎰 Putar Spin Harian", use_container_width=True):
+            play_sfx("gacha")
+            d["last_gacha_date"] = today_str
+            rewards = [
+                ("🪙 Bonus Gold Melimpah (+100 Gold)", "gold", 100),
+                ("⚡ Potion Stamina Instan (+50 Stamina)", "stamina", 50),
+                ("✨ Bonus EXP Gratis (+150 EXP)", "exp", 150),
+                ("💣 Zonk! Terlambat bangun (-10 HP)", "hp", -10)
+            ]
+            chosen = random.choice(rewards)
+            st.success(f"🎉 Result: {chosen[0]}")
+            
+            if chosen[1] == "gold": d["gold"] += chosen[2]
+            elif chosen[1] == "stamina": d["stamina"] = min(d["max_stamina"], d["stamina"] + chosen[2])
+            elif chosen[1] == "exp": add_exp(chosen[2])
+            elif chosen[1] == "hp": d["hp"] = max(0, d["hp"] + chosen[2])
+            
+            save_game()
+            st.rerun()
+
+# ================= TAB 8: FITUR 3 - PET COMPANION =================
+with tab_pet:
+    st.subheader("🐾 Pet Companion System")
+    st.caption("Pilih pendamping setia yang memberikan buff pasif harian!")
+    
+    pets = [
+        {"name": "🦉 Baby Owl of Wisdom", "cost": 150, "desc": "Memberikan +1 INT tambahan gratis tiap sesi belajar."},
+        {"name": "🐺 Spirit Wolf", "cost": 220, "desc": "Memberikan +25 Damage tambahan di Dungeon Boss."},
+        {"name": "🐢 Shield Turtle", "cost": 180, "desc": "Menambah Max HP sebesar +30 secara permanen."}
+    ]
+
+    for p in pets:
+        with st.container():
+            c_p1, c_p2 = st.columns([3, 1])
+            c_p1.markdown(f"**{p['name']}** — 🪙 **{p['cost']} Gold**\n\n*{p['desc']}*")
+            if d["active_pet"] == p["name"]:
+                c_p2.button("Aktif 🐾", key="pet_"+p["name"], disabled=True)
+            else:
+                if c_p2.button("Adopt Pet", key="pet_"+p["name"]):
+                    if d["gold"] >= p["cost"]:
+                        d["gold"] -= p["cost"]
+                        d["active_pet"] = p["name"]
+                        if p["name"] == "🐢 Shield Turtle":
+                            d["max_hp"] += 30
+                            d["hp"] += 30
+                        save_game()
+                        st.success(f"Berhasil mengadopsi {p['name']}!")
+                        st.rerun()
+                    else:
+                        st.error("Gold tidak cukup!")
+        st.divider()
+
+# ================= TAB 9: FITUR 4 - ANALYTICS CHART =================
+with tab_analytics:
+    st.subheader("📈 Visualisasi & Analytics Kedisiplinan")
+    st.caption("Pantau perkembangan fokus dan aktivitas harian Nauval!")
+    
+    if d["activity_log"]:
+        df = pd.DataFrame(d["activity_log"])
+        st.write("📊 **Grafik Aktivitas Kedisiplinan:**")
+        st.bar_chart(df, x="date", y="value", color="activity")
+    else:
+        st.info("Belum ada data aktivitas yang tersimpan. Selesaikan Quest untuk merekam grafik!")
