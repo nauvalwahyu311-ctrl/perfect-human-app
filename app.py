@@ -1307,6 +1307,41 @@ with tab_boss:
     st.markdown("---")
 
     # --- FITUR TAMBAHAN: LIVE COMBAT LOG & MANAJEMEN ITEM AMAN ---
+    # --- SISTEM REBUILD STATS OTOMATIS BERDASARKAN ITEM YANG DI-EQUIP ---
+# Reset stat dasar sementara (sesuaikan dengan base stat asli karaktermu sebelum ditambah item)
+base_max_hp = 100
+base_max_stamina = 100
+
+# Hitung ulang total bonus dari item yang sedang aktif di equipped_items
+bonus_hp = 0
+bonus_stamina = 0
+
+for item in d.get("equipped_items", []):
+    if item == "🥾 Sepatu Pengembara":
+        bonus_stamina += 20
+    elif item == "👑 Jubah Kebesaran Kaisar":
+        bonus_hp += 150
+        bonus_stamina += 100
+    elif item == "🌌 Inti Singularitas":
+        bonus_hp += 300
+        bonus_stamina += 250
+    elif item == "🛡️ Perisai Perunggu Veteran":
+        bonus_hp += 100
+    elif item == "🔥 Bara Api Mistik Abadi":
+        bonus_hp += 200
+    elif item == "⚡ Mahkota Petir Transenden":
+        bonus_stamina += 180
+    # (Kamu bisa tambahkan item lain di sini jika diperlukan)
+
+# Terapkan hasil perhitungan ke data karakter secara real-time
+d["max_hp"] = base_max_hp + bonus_hp
+d["max_stamina"] = base_max_stamina + bonus_stamina
+
+# Pastikan current stamina/hp tidak melebihi max yang baru
+if d.get("stamina", 100) > d["max_stamina"]:
+    d["stamina"] = d["max_stamina"]
+if d.get("hp", 100) > d["max_hp"]:
+    d["hp"] = d["max_hp"]
     tab_log, tab_collection = st.tabs(["📜 Live Battle Log", "🛡️ Rincian & Manajemen Efek Item"])
     
     with tab_log:
