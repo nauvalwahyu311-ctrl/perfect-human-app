@@ -647,14 +647,13 @@ tab_quest, tab_skill, tab_boss, tab_penalty, tab_shop, tab_equips, tab_gacha, ta
 with st.expander("📊 Lihat Atribut, Skill & Keuntungan Pasif Karakter", expanded=False):
     s1, s2, s3, s4 = st.columns(4)
     
-    # Ambil data dari "attributes" agar aman dan sesuai dengan struktur data utamamu
-    if "attributes" not in d: 
-        d["attributes"] = {"INT": 0, "STR": 0, "VIT": 0, "AGI": 0}
+    # Perbaikan: Ambil data dari "stats" (atau fallback ke "attributes" jika ada) agar nilai INT dan lainnya muncul kembali
+    stats_source = d.get("stats", d.get("attributes", {"INT": 0, "STR": 0, "VIT": 0, "AGI": 0}))
 
-    val_str = d["attributes"].get("STR", 0)
-    val_int = d["attributes"].get("INT", 0)
-    val_agi = d["attributes"].get("AGI", 0)
-    val_vit = d["attributes"].get("VIT", 0)
+    val_str = stats_source.get("STR", 0)
+    val_int = stats_source.get("INT", 0)
+    val_agi = stats_source.get("AGI", 0)
+    val_vit = stats_source.get("VIT", 0)
 
     s1.metric("🏋️ STR", val_str)
     s2.metric("📚 INT", val_int)
