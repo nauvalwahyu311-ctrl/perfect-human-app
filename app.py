@@ -174,186 +174,12 @@ def log_activity(activity_name, value):
     d["activity_log"].append({"date": today_str, "activity": activity_name, "value": value})
 
 def update_title():
-    # Cek gelar lama sebelum di-update untuk mendeteksi kenaikan tier
-    old_title = d.get("title", "🌱 PEMULA")
+    if d["level"] >= 30: d["title"] = "👑 THE PERFECT HUMAN EMPEROR"
+    elif d["level"] >= 20: d["title"] = "⚔️ Supreme Shadow Knight"
+    elif d["level"] >= 10: d["title"] = "🛡️ Guardian of Discipline"
+    elif d["level"] >= 5: d["title"] = "📜 Elite Initiate"
+    else: d["title"] = "🌱 Novice Initiate"
 
-    if d["level"] >= 50:
-        d["title"] = "🌌 PENGUASA SINGULARITAS"
-        reward_item = "🌌 Inti Singularitas"
-        effect_type = "singularity"
-    elif d["level"] >= 45:
-        d["title"] = "⚡ PUNCAK TRANSCENDENT"
-        reward_item = "⚡ Mahkota Petir Transenden"
-        effect_type = "transcendent"
-    elif d["level"] >= 40:
-        d["title"] = "🔥 PERINTIS MISTIK"
-        reward_item = "🔥 Bara Api Mistik Abadi"
-        effect_type = "mystic_fire"
-    elif d["level"] >= 35:
-        d["title"] = "⭐ SAGE KEDISIPLINAN ILAHI"
-        reward_item = "⭐ Kitab Kebijaksanaan Langit"
-        effect_type = "divine_sage"
-    elif d["level"] >= 30:
-        d["title"] = "👑 KAISAR MANUSIA SEMPURNA"
-        reward_item = "👑 Jubah Kebesaran Kaisar"
-        effect_type = "emperor_robe"
-    elif d["level"] >= 26:
-        d["title"] = "💎 GRANDMASTER LEGENDARIS"
-        reward_item = "💎 Kristal Inti Grandmaster"
-        effect_type = "grandmaster_crystal"
-    elif d["level"] >= 22:
-        d["title"] = "⚔️ KESATRIA BAYANGAN UTAMA"
-        reward_item = "🗡️ Belati Bayangan Legendaris"
-        effect_type = "shadow_dagger"
-    elif d["level"] >= 18:
-        d["title"] = "🛡️ GARDA VETERAN"
-        reward_item = "🛡️ Perisai Perunggu Veteran"
-        effect_type = "veteran_shield"
-    elif d["level"] >= 15:
-        d["title"] = "🛡️ PENGAWAL KEDISIPLINAN"
-        reward_item = "📜 Lencana Pengawal Disiplin"
-        effect_type = "discipline_badge"
-    elif d["level"] >= 12:
-        d["title"] = "⚡ PRODIGY YANG BANGKIT"
-        reward_item = "⚡ Ramuan Energi Prodigy"
-        effect_type = "prodigy_potion"
-    elif d["level"] >= 10:
-        d["title"] = "📜 INISIATIF ELIT"
-        reward_item = "📜 Gulungan Ilmu Elit"
-        effect_type = "elite_scroll"
-    elif d["level"] >= 8:
-        d["title"] = "📘 SARJANA TERJAGA"
-        reward_item = "📘 Pena Emas Sarjana"
-        effect_type = "scholar_pen"
-    elif d["level"] >= 6:
-        d["title"] = "🔍 PENCARI DISIPLIN"
-        reward_item = "🔍 Kaca Pembesar Fokus"
-        effect_type = "focus_glass"
-    elif d["level"] >= 4:
-        d["title"] = "🌿 PEMagang FOKUS"
-        reward_item = "🌿 Bibit Pohon Kebiasaan"
-        effect_type = "habit_seed"
-    elif d["level"] >= 2:
-        d["title"] = "🌱 PENGEMBARA HARAPAN"
-        reward_item = "🥾 Sepatu Pengembara"
-        effect_type = "traveler_boots"
-    else:
-        d["title"] = "🌱 PEMULA"
-        reward_item = None
-        effect_type = None
-
-    # Jika gelar berubah, berikan item spesifik & jalankan efek uniknya
-    if old_title != d["title"] and reward_item:
-        if "inventory" not in d:
-            d["inventory"] = []
-        d["inventory"].append(reward_item)
-        
-        if "attributes" not in d: 
-            d["attributes"] = {"INT": 0, "STR": 0, "VIT": 0, "AGI": 0}
-
-        # --- EFEK KHUSUS MASING-MASING ITEM DI TIAP TINGKATAN ---
-        if effect_type == "singularity":
-            d["max_hp"] += 300; d["max_stamina"] += 250; d["hp"] = d["max_hp"]; d["stamina"] = d["max_stamina"]
-            for k in d["attributes"]: d["attributes"][k] += 150
-            d["gold"] += 10000
-            effect_desc = "🌌 Efek Inti Singularitas: Seluruh Atribut +150, Max HP/Stamina +300/+250, & +10.000 Gold!"
-        elif effect_type == "transcendent":
-            d["max_stamina"] += 180; d["stamina"] = d["max_stamina"]
-            d["attributes"]["INT"] += 120; d["attributes"]["AGI"] += 100
-            d["gold"] += 7500
-            effect_desc = "⚡ Efek Mahkota Petir: INT +120, AGI +100, Max Stamina +180, & +7.500 Gold!"
-        elif effect_type == "mystic_fire":
-            d["max_hp"] += 200; d["hp"] = d["max_hp"]
-            d["attributes"]["STR"] += 110; d["attributes"]["VIT"] += 90
-            d["gold"] += 5000
-            effect_desc = "🔥 Efek Bara Mistik: STR +110, VIT +90, Max HP +200, & +5.000 Gold!"
-        elif effect_type == "divine_sage":
-            d["attributes"]["INT"] += 100
-            d["gold"] += 4000
-            effect_desc = "⭐ Efek Kitab Langit: Atribut Intelijen (INT) meroket +100 & +4.000 Gold!"
-        elif effect_type == "emperor_robe":
-            d["max_hp"] += 150; d["max_stamina"] += 100; d["hp"] = d["max_hp"]; d["stamina"] = d["max_stamina"]
-            d["gold"] += 3500
-            effect_desc = "👑 Efek Jubah Kaisar: Max HP +150, Max Stamina +100, & +3.500 Gold Kas Negara!"
-        elif effect_type == "grandmaster_crystal":
-            d["attributes"]["STR"] += 80; d["attributes"]["AGI"] += 80
-            d["gold"] += 2500
-            effect_desc = "💎 Efek Kristal Grandmaster: STR & AGI masing-masing +80, & +2.500 Gold!"
-        elif effect_type == "shadow_dagger":
-            d["attributes"]["AGI"] += 90
-            d["gold"] += 2000
-            effect_desc = "🗡️ Efek Belati Bayangan: Kelincahan (AGI) meningkat +90 & +2.000 Gold!"
-        elif effect_type == "veteran_shield":
-            d["max_hp"] += 100; d["hp"] = d["max_hp"]
-            d["attributes"]["VIT"] += 70
-            d["gold"] += 1500
-            effect_desc = "🛡️ Efek Perisai Veteran: Max HP +100, Vitality (VIT) +70, & +1.500 Gold!"
-        elif effect_type == "discipline_badge":
-            d["attributes"]["INT"] += 50; d["attributes"]["VIT"] += 50
-            d["gold"] += 1000
-            effect_desc = "📜 Efek Lencana Disiplin: INT & VIT masing-masing +50, & +1.000 Gold!"
-        elif effect_type == "prodigy_potion":
-            d["max_stamina"] += 60; d["stamina"] = d["max_stamina"]
-            d["gold"] += 800
-            effect_desc = "⚡ Efek Ramuan Prodigy: Max Stamina permanen +60 & +800 Gold!"
-        elif effect_type == "elite_scroll":
-            d["attributes"]["INT"] += 40
-            d["gold"] += 600
-            effect_desc = "📜 Efek Gulungan Elit: Intelijen (INT) +40 & +600 Gold!"
-        elif effect_type == "scholar_pen":
-            d["attributes"]["INT"] += 25
-            d["gold"] += 400
-            effect_desc = "📘 Efek Pena Emas: Intelijen (INT) +25 & +400 Gold!"
-        elif effect_type == "focus_glass":
-            d["attributes"]["AGI"] += 20
-            d["gold"] += 300
-            effect_desc = "🔍 Efek Kaca Fokus: Kelincahan (AGI) +20 & +300 Gold!"
-        elif effect_type == "habit_seed":
-            d["attributes"]["VIT"] += 15
-            d["gold"] += 200
-            effect_desc = "🌿 Efek Bibit Kebiasaan: Vitality (VIT) +15 & +200 Gold!"
-        elif effect_type == "traveler_boots":
-            d["max_stamina"] += 20; d["stamina"] = d["max_stamina"]
-            d["gold"] += 100
-            effect_desc = "🥾 Efek Sepatu Pengembara: Max Stamina +20 & +100 Gold!"
-        else:
-            effect_desc = "Mendapatkan item baru."
-
-        st.balloons()
-        st.success(f"🎉 SELAMAT NAUVAL! Naik Gelar ke **{d['title']}**!\n\n🎁 Hadiah Item Unik: **{reward_item}** masuk ke Inventory!\n✨ {effect_desc}")
-
-# --- UI DETAIL & INFORMASI TITLE YANG LEBIH MENARIK ---
-with st.expander("✨ Lihat Detail Gelar & Informasi Status Karakter", expanded=False):
-    st.markdown(
-        f"""
-        <div style="background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%); padding: 20px; border-radius: 14px; border: 2px solid #ff9a9e; color: white;">
-            <h3 style="margin-top: 0; color: #ff9a9e;">👑 Status Gelar Aktif: {d.get('title', 'PEMULA')}</h3>
-            <p style="margin-bottom: 5px;"><b>Level Karakter Saat Ini:</b> Level {d.get('level', 1)}</p>
-            <p style="margin-bottom: 15px;"><b>Master:</b> Nauval (Mode Mentor Akademik Aktif 🌸)</p>
-            <hr style="border-color: rgba(255,255,255,0.2);">
-            <h4 style="color: #fecfef; margin-bottom: 8px;">📜 Daftar Seluruh Tingkatan Gelar & Hadiah Item Uniknya:</h4>
-            <ul style="padding-left: 20px; line-height: 1.6; font-size: 14px;">
-                <li><b>Level 50+ :</b> 🌌 PENGUASA SINGULARITAS ➔ <i>Hadiah: 🌌 Inti Singularitas (Semua Atribut +150, Max HP/Stamina +300/+250)</i></li>
-                <li><b>Level 45+ :</b> ⚡ PUNCAK TRANSCENDENT ➔ <i>Hadiah: ⚡ Mahkota Petir Transenden (INT +120, AGI +100, Max Stamina +180)</i></li>
-                <li><b>Level 40+ :</b> 🔥 PERINTIS MISTIK ➔ <i>Hadiah: 🔥 Bara Api Mistik Abadi (STR +110, VIT +90, Max HP +200)</i></li>
-                <li><b>Level 35+ :</b> ⭐ SAGE KEDISIPLINAN ILAHI ➔ <i>Hadiah: ⭐ Kitab Kebijaksanaan Langit (INT +100)</i></li>
-                <li><b>Level 30+ :</b> 👑 KAISAR MANUSIA SEMPURNA ➔ <i>Hadiah: 👑 Jubah Kebesaran Kaisar (Max HP +150, Max Stamina +100)</i></li>
-                <li><b>Level 26+ :</b> 💎 GRANDMASTER LEGENDARIS ➔ <i>Hadiah: 💎 Kristal Inti Grandmaster (STR & AGI +80)</i></li>
-                <li><b>Level 22+ :</b> ⚔️ KESATRIA BAYANGAN UTAMA ➔ <i>Hadiah: 🗡️ Belati Bayangan Legendaris (AGI +90)</i></li>
-                <li><b>Level 18+ :</b> 🛡️ GARDA VETERAN ➔ <i>Hadiah: 🛡️ Perisai Perunggu Veteran (Max HP +100, VIT +70)</i></li>
-                <li><b>Level 15+ :</b> 🛡️ PENGAWAL KEDISIPLINAN ➔ <i>Hadiah: 📜 Lencana Pengawal Disiplin (INT & VIT +50)</i></li>
-                <li><b>Level 12+ :</b> ⚡ PRODIGY YANG BANGKIT ➔ <i>Hadiah: ⚡ Ramuan Energi Prodigy (Max Stamina +60)</i></li>
-                <li><b>Level 10+ :</b> 📜 INISIATIF ELIT ➔ <i>Hadiah: 📜 Gulungan Ilmu Elit (INT +40)</i></li>
-                <li><b>Level 8+ :</b> 📘 SARJANA TERJAGA ➔ <i>Hadiah: 📘 Pena Emas Sarjana (INT +25)</i></li>
-                <li><b>Level 6+ :</b> 🔍 PENCARI DISIPLIN ➔ <i>Hadiah: 🔍 Kaca Pembesar Fokus (AGI +20)</i></li>
-                <li><b>Level 4+ :</b> 🌿 PEMagang FOKUS ➔ <i>Hadiah: 🌿 Bibit Pohon Kebiasaan (VIT +15)</i></li>
-                <li><b>Level 2+ :</b> 🌱 PENGEMBARA HARAPAN ➔ <i>Hadiah: 🥾 Sepatu Pengembara (Max Stamina +20)</i></li>
-                <li><b>Level 1 :</b> 🌱 PEMULA ➔ <i>(Tanpa Hadiah Khusus)</i></li>
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 def check_achievements():
     now = datetime.now()
     current_year_week = f"{now.year}-W{now.isocalendar()[1]}"
@@ -1307,47 +1133,6 @@ with tab_boss:
     st.markdown("---")
 
     # --- FITUR TAMBAHAN: LIVE COMBAT LOG & MANAJEMEN ITEM AMAN ---
-   # --- SAFETY CHECK & SISTEM REBUILD STATS AMAN UNTUK SEMUA ITEM ---
-if "inventory" not in d:
-    d["inventory"] = []
-if "equipped_items" not in d:
-    d["equipped_items"] = []
-
-# Base stat asli karaktermu sebelum ditambah item
-base_max_hp = 100
-base_max_stamina = 100
-
-# Hitung total bonus secara dinamis dari item yang sedang di-equip
-bonus_hp = 0
-bonus_stamina = 0
-
-for item in d["equipped_items"]:
-    # Cek berdasarkan kata kunci nama item agar semua item tetap terdeteksi
-    if "Singularitas" in item:
-        bonus_hp += 300
-        bonus_stamina += 250
-    elif "Kaisar" in item:
-        bonus_hp += 150
-        bonus_stamina += 100
-    elif "Veteran" in item or "Perisai" in item:
-        bonus_hp += 100
-    elif "Mistik" in item or "Bara" in item:
-        bonus_hp += 200
-    elif "Transenden" in item or "Petir" in item:
-        bonus_stamina += 180
-    elif "Pengembara" in item or "Sepatu" in item:
-        bonus_stamina += 20
-    elif "Amulet" in item or "Vitality" in item:
-        bonus_stamina += 50
-
-# Terapkan hasil perhitungan ke data karakter
-d["max_hp"] = base_max_hp + bonus_hp
-d["max_stamina"] = base_max_stamina + bonus_stamina
-
-if d.get("stamina", 100) > d["max_stamina"]:
-    d["stamina"] = d["max_stamina"]
-if d.get("hp", 100) > d["max_hp"]:
-    d["hp"] = d["max_hp"]
     tab_log, tab_collection = st.tabs(["📜 Live Battle Log", "🛡️ Rincian & Manajemen Efek Item"])
     
     with tab_log:
@@ -1358,49 +1143,30 @@ if d.get("hp", 100) > d["max_hp"]:
             
     with tab_collection:
         st.markdown("### 🎒 Manajemen Tas Inventory & Equip Gear")
-        st.caption("Klik tombol **'Pakai (Equip)'** agar item aktif memperkuat atributmu, atau **'Lepas (Unequip)'** untuk menonaktifkan efeknya secara otomatis.")
+        st.caption("Klik tombol **'Pakai (Equip)'** agar item aktif memperkuat atributmu dalam pertempuran, atau **'Lepas (Unequip)'** untuk menyimpannya kembali ke tas.")
 
-        # Database database efek item title & perlengkapan
         item_effects_database = {
-            "🌌 Inti Singularitas": "Semua Atribut +150, Max HP/Stamina +300/+250",
-            "⚡ Mahkota Petir Transenden": "INT +120, AGI +100, Max Stamina +180",
-            "🔥 Bara Api Mistik Abadi": "STR +110, VIT +90, Max HP +200",
-            "⭐ Kitab Kebijaksanaan Langit": "Intelijen (INT) +100",
-            "👑 Jubah Kebesaran Kaisar": "Max HP +150, Max Stamina +100",
-            "💎 Kristal Inti Grandmaster": "STR & AGI masing-masing +80",
-            "🗡️ Belati Bayangan Legendaris": "Kelincahan (AGI) +90",
-            "🛡️ Perisai Perunggu Veteran": "Max HP +100, Vitality (VIT) +70",
-            "📜 Lencana Pengawal Disiplin": "INT & VIT masing-masing +50",
-            "⚡ Ramuan Energi Prodigy": "Max Stamina permanen +60",
-            "📜 Gulungan Ilmu Elit": "Intelijen (INT) +40",
-            "📘 Pena Emas Sarjana": "Intelijen (INT) +25",
-            "🔍 Kaca Pembesar Fokus": "Kelincahan (AGI) +20",
-            "🌿 Bibit Pohon Kebiasaan": "Vitality (VIT) +15",
-            "🥾 Sepatu Pengembara": "Max Stamina +20",
-            # Tambahan gear lama kamu
-            "🗡️ Steel Sword of Focus": "+15% Damage saat menyerang",
-            "🗡️ Excalibur of Focus": "+50% Damage & +15% INT Boost",
-            "🛡️ Aegis Shield of Willpower": "+30% Damage & kurangi penalty HP",
-            "💍 Ring of Endless Energy": "2x lipat bonus Streak Harian",
-            "👟 Boots of Hyper Productivity": "Hemat 30% konsumsi Stamina workout",
-            "👑 Crown of Unstoppable Discipline": "+75% Damage & bonus EXP berlimpah",
-            "⚔️ Scythe of Zero Delay": "200% Damage murni ke Boss Raid",
-            "📿 Amulet of Endless Vitality": "+50 Max Stamina",
-            "⌛ Cloak of Chronos": "Kurangi Cooldown Skill 1 Turn",
-            "🔮 Orb of Absolute Clarity": "+40% Critical Chance",
-            "🔥 Armor of the Overlord": "2.5x Damage murni & proteksi mutlak"
+            "🗡️ Steel Sword of Focus": "Memberikan tambahan +15% kekuatan Damage saat menyerang musuh atau boss.",
+            "💣 Procrastination Bomb": "Item habis pakai (consumable). Memberikan 250 Damage murni instan langsung ke HP Boss saat dilempar.",
+            "🧪 Mega Elixir": "Item habis pakai (consumable). Memulihkan HP dan Stamina Nauval kembali penuh 100% seketika.",
+            "🗡️ Excalibur of Focus": "+50% Damage Serangan dasar & +15% INT Boost penunjang kecerdasan.",
+            "🛡️ Aegis Shield of Willpower": "+30% Damage serangan & mengurangi hukuman penalty pengurangan HP saat gagal.",
+            "💍 Ring of Endless Energy": "Menggandakan (2x lipat) bonus perolehan Streak Harian.",
+            "👟 Boots of Hyper Productivity": "Menghemat 30% konsumsi Stamina saat melakukan sesi latihan fisik (workout).",
+            "👑 Crown of Unstoppable Discipline": "+75% Damage besar-besaran & mendatangkan bonus EXP berlimpah.",
+            "⚔️ Scythe of Zero Delay": "Memberikan 2x lipat (200%) Damage murni ke semua jenis Boss Raid.",
+            "📿 Amulet of Endless Vitality": "Memberikan tambahan +50 batas maksimal (Max) Stamina secara permanen saat di-equip.",
+            "⌛ Cloak of Chronos": "Mengurangi waktu tunggu (Cooldown) penggunaan Skill aktif sebanyak 1 Turn.",
+            "🔮 Orb of Absolute Clarity": "Menambahkan +40% peluang Critical Chance untuk seluruh variasi serangan.",
+            "🔥 Armor of the Overlord": "Memberikan 2.5x Lipat Damage murni & proteksi kekebalan mutlak dari kekalahan."
         }
 
-        if "equipped_items" not in d:
-            d["equipped_items"] = []
-        if "inventory" not in d:
-            d["inventory"] = []
-
+        # Gabungkan item unik dari kedua list secara bersih tanpa duplikat ganda
         unique_owned_items = list(set(d["inventory"] + d["equipped_items"]))
 
         if unique_owned_items:
             for item in unique_owned_items:
-                effect_explanation = item_effects_database.get(item, "Item khusus penunjang produktivitas.")
+                effect_explanation = item_effects_database.get(item, "Item khusus dengan efek misterius yang membantu produktivitasmu.")
                 is_equipped = item in d["equipped_items"]
                 
                 with st.container(border=True):
@@ -1417,25 +1183,25 @@ if d.get("hp", 100) > d["max_hp"]:
                         if not is_equipped:
                             if item not in ["💣 Procrastination Bomb", "🧪 Mega Elixir"]:
                                 if st.button("🟢 Pakai", key=f"equip_{item}", use_container_width=True):
+                                    # Pindahkan item secara bersih: hapus dari inventory, masukkan ke equipped
                                     if item in d["inventory"]:
                                         d["inventory"].remove(item)
                                     if item not in d["equipped_items"]:
                                         d["equipped_items"].append(item)
-                                    
                                     save_game()
-                                    st.success(f"Berhasil memakai {item}! Efek aktif.")
+                                    st.success(f"Berhasil memakai {item}!")
                                     st.rerun()
                             else:
                                 st.caption("Gunakan langsung di panel aksi")
                         else:
                             if st.button("🔴 Lepas", key=f"unequip_{item}", use_container_width=True):
+                                # Pindahkan item secara bersih: hapus dari equipped, masukkan ke inventory
                                 if item in d["equipped_items"]:
                                     d["equipped_items"].remove(item)
                                 if item not in d["inventory"]:
                                     d["inventory"].append(item)
-                                
                                 save_game()
-                                st.warning(f"Berhasil melepas {item}! Efek dinonaktifkan.")
+                                st.warning(f"Berhasil melepas {item}!")
                                 st.rerun()
         else:
             st.info("Tas inventori Nauval masih kosong. Selesaikan misi, belanja di shop, atau taklukkan Boss Raid untuk mengisinya!")
