@@ -633,12 +633,83 @@ if d["active_buffs"] or d["equipped_items"] or d["inventory"]:
     for inv in d["inventory"]:
         st.warning(f"🎒 Item Storage: **{inv}**")
 
-with st.expander("📊 Lihat Atribut & Skill Karakter", expanded=False):
+with st.expander("🏆 Achievement Atribut & Gelar Karakter", expanded=False):
     s1, s2, s3, s4 = st.columns(4)
     s1.metric("🏋️ STR", d["stats"]["STR"])
     s2.metric("📚 INT", d["stats"]["INT"])
     s3.metric("⚡ AGI", d["stats"]["AGI"])
     s4.metric("🛡️ VIT", d["stats"]["VIT"])
+
+    st.markdown("---")
+    st.markdown("### 🏅 Koleksi Milestone Achievement & Title Karakter")
+
+    achievements = []
+
+    # --- STR Achievements & Titles ---
+    val_str = d["stats"]["STR"]
+    if val_str >= 300:
+        achievements.append("👑 **[Pillar of Dominion]** — Mencapai STR 300+ (Manusia Terkuat di Muka Bumi)")
+    if val_str >= 200:
+        achievements.append("⚔️ **[God of War]** — Mencapai STR 200+ (Kekuatan Fisik Tanpa Batas)")
+    if val_str >= 150:
+        achievements.append("💪 **[Colossal Might]** — Mencapai STR 150+ (Otot Besi Berurat Kawat)")
+    if val_str >= 100:
+        achievements.append("🔥 **[Berserker Aura]** — Mencapai STR 100+ (Petarung Tanpa Rasa Takut)")
+    if val_str >= 50:
+        achievements.append("🛡️ **[Titan Strength]** — Mencapai STR 50+ (Pondasi Tubuh Kokoh)")
+    if val_str >= 25:
+        achievements.append("⚡ **[Power Surge]** — Mencapai STR 25+ (Awalan Otot Terlatih)")
+
+    # --- INT Achievements & Titles ---
+    val_int = d["stats"]["INT"]
+    if val_int >= 300:
+        achievements.append("👑 **[Cosmic Sovereign]** — Mencapai INT 300+ (Penguasa Pengetahuan Semesta)")
+    if val_int >= 200:
+        achievements.append("🧠 **[Omnipotent Mind]** — Mencapai INT 200+ (Kecerdasan Tingkat Dewa)")
+    if val_int >= 150:
+        achievements.append("📖 **[Cosmic Sage]** — Mencapai INT 150+ (Pemberi Kebijaksanaan)")
+    if val_int >= 100:
+        achievements.append("💡 **[Enlightened Scholar]** — Mencapai INT 100+ (Pikiran Terbuka & Tajam)")
+    if val_int >= 50:
+        achievements.append("📜 **[Wise Sage]** — Mencapai INT 50+ (Haus Akan Ilmu Baru)")
+    if val_int >= 25:
+        achievements.append("🔍 **[Sharp Focus]** — Mencapai INT 25+ (Konsentrasi Mulai Terbentuk)")
+
+    # --- AGI Achievements & Titles ---
+    val_agi = d["stats"]["AGI"]
+    if val_agi >= 300:
+        achievements.append("👑 **[Master of Time & Space]** — Mencapai AGI 300+ (Lebih Cepat dari Kedipan Mata)")
+    if val_agi >= 200:
+        achievements.append("⚡ **[Speed of Light]** — Mencapai AGI 200+ (Gerakan Menembus Dimensi)")
+    if val_agi >= 150:
+        achievements.append("🌪️ **[Chronos Master]** — Mencapai AGI 150+ (Pengendali Kecepatan Mutlak)")
+    if val_agi >= 100:
+        achievements.append("🍃 **[Phantom Step]** — Mencapai AGI 100+ (Bergerak Bagai Bayangan)")
+    if val_agi >= 50:
+        achievements.append("🏃 **[Swift Motion]** — Mencapai AGI 50+ (Refleks Sangat Cepat)")
+    if val_agi >= 25:
+        achievements.append("💨 **[Agile Runner]** — Mencapai AGI 25+ (Kelincahan Dasar Terasa)")
+
+    # --- VIT Achievements & Titles ---
+    val_vit = d["stats"]["VIT"]
+    if val_vit >= 300:
+        achievements.append("👑 **[Indestructible Entity]** — Mencapai VIT 300+ (Mustahil untuk Dikalahkan)")
+    if val_vit >= 200:
+        achievements.append("🛡️ **[Immortal Body]** — Mencapai VIT 200+ (Ketahanan Tubuh Abadi)")
+    if val_vit >= 150:
+        achievements.append("🧱 **[Indestructible Core]** — Mencapai VIT 150+ (Jiwa dan Raga Seajaib Baja)")
+    if val_vit >= 100:
+        achievements.append("🏰 **[Adamantine Shield]** — Mencapai VIT 100+ (Pertahanan Tak Tertembus)")
+    if val_vit >= 50:
+        achievements.append("🪵 **[Iron Fortress]** — Mencapai VIT 50+ (Stamina & Imunitas Tangguh)")
+    if val_vit >= 25:
+        achievements.append("🌱 **[Sturdy Body]** — Mencapai VIT 25+ (Badan Tidak Mudah Sakit)")
+
+    if achievements:
+        for ach in achievements:
+            st.markdown(f"- {ach}")
+    else:
+        st.caption("Belum ada Achievement atribut yang terbuka. Tingkatkan minimal 25 poin pada atribut apa pun untuk membuka achievement pertamamu, Nauval!")
 
 st.divider()
 
