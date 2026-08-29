@@ -1307,37 +1307,43 @@ with tab_boss:
     st.markdown("---")
 
     # --- FITUR TAMBAHAN: LIVE COMBAT LOG & MANAJEMEN ITEM AMAN ---
-    # --- SISTEM REBUILD STATS OTOMATIS BERDASARKAN ITEM YANG DI-EQUIP ---
-# Reset stat dasar sementara (sesuaikan dengan base stat asli karaktermu sebelum ditambah item)
+   # --- SAFETY CHECK & SISTEM REBUILD STATS AMAN UNTUK SEMUA ITEM ---
+if "inventory" not in d:
+    d["inventory"] = []
+if "equipped_items" not in d:
+    d["equipped_items"] = []
+
+# Base stat asli karaktermu sebelum ditambah item
 base_max_hp = 100
 base_max_stamina = 100
 
-# Hitung ulang total bonus dari item yang sedang aktif di equipped_items
+# Hitung total bonus secara dinamis dari item yang sedang di-equip
 bonus_hp = 0
 bonus_stamina = 0
 
-for item in d.get("equipped_items", []):
-    if item == "🥾 Sepatu Pengembara":
-        bonus_stamina += 20
-    elif item == "👑 Jubah Kebesaran Kaisar":
-        bonus_hp += 150
-        bonus_stamina += 100
-    elif item == "🌌 Inti Singularitas":
+for item in d["equipped_items"]:
+    # Cek berdasarkan kata kunci nama item agar semua item tetap terdeteksi
+    if "Singularitas" in item:
         bonus_hp += 300
         bonus_stamina += 250
-    elif item == "🛡️ Perisai Perunggu Veteran":
+    elif "Kaisar" in item:
+        bonus_hp += 150
+        bonus_stamina += 100
+    elif "Veteran" in item or "Perisai" in item:
         bonus_hp += 100
-    elif item == "🔥 Bara Api Mistik Abadi":
+    elif "Mistik" in item or "Bara" in item:
         bonus_hp += 200
-    elif item == "⚡ Mahkota Petir Transenden":
+    elif "Transenden" in item or "Petir" in item:
         bonus_stamina += 180
-    # (Kamu bisa tambahkan item lain di sini jika diperlukan)
+    elif "Pengembara" in item or "Sepatu" in item:
+        bonus_stamina += 20
+    elif "Amulet" in item or "Vitality" in item:
+        bonus_stamina += 50
 
-# Terapkan hasil perhitungan ke data karakter secara real-time
+# Terapkan hasil perhitungan ke data karakter
 d["max_hp"] = base_max_hp + bonus_hp
 d["max_stamina"] = base_max_stamina + bonus_stamina
 
-# Pastikan current stamina/hp tidak melebihi max yang baru
 if d.get("stamina", 100) > d["max_stamina"]:
     d["stamina"] = d["max_stamina"]
 if d.get("hp", 100) > d["max_hp"]:
