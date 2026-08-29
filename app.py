@@ -1317,30 +1317,49 @@ with tab_boss:
             
     with tab_collection:
         st.markdown("### 🎒 Manajemen Tas Inventory & Equip Gear")
-        st.caption("Klik tombol **'Pakai (Equip)'** agar item aktif memperkuat atributmu dalam pertempuran, atau **'Lepas (Unequip)'** untuk menyimpannya kembali ke tas.")
+        st.caption("Klik tombol **'Pakai (Equip)'** agar item aktif memperkuat atributmu, atau **'Lepas (Unequip)'** untuk menonaktifkan efeknya secara otomatis.")
 
+        # Database database efek item title & perlengkapan
         item_effects_database = {
-            "🗡️ Steel Sword of Focus": "Memberikan tambahan +15% kekuatan Damage saat menyerang musuh atau boss.",
-            "💣 Procrastination Bomb": "Item habis pakai (consumable). Memberikan 250 Damage murni instan langsung ke HP Boss saat dilempar.",
-            "🧪 Mega Elixir": "Item habis pakai (consumable). Memulihkan HP dan Stamina Nauval kembali penuh 100% seketika.",
-            "🗡️ Excalibur of Focus": "+50% Damage Serangan dasar & +15% INT Boost penunjang kecerdasan.",
-            "🛡️ Aegis Shield of Willpower": "+30% Damage serangan & mengurangi hukuman penalty pengurangan HP saat gagal.",
-            "💍 Ring of Endless Energy": "Menggandakan (2x lipat) bonus perolehan Streak Harian.",
-            "👟 Boots of Hyper Productivity": "Menghemat 30% konsumsi Stamina saat melakukan sesi latihan fisik (workout).",
-            "👑 Crown of Unstoppable Discipline": "+75% Damage besar-besaran & mendatangkan bonus EXP berlimpah.",
-            "⚔️ Scythe of Zero Delay": "Memberikan 2x lipat (200%) Damage murni ke semua jenis Boss Raid.",
-            "📿 Amulet of Endless Vitality": "Memberikan tambahan +50 batas maksimal (Max) Stamina secara permanen saat di-equip.",
-            "⌛ Cloak of Chronos": "Mengurangi waktu tunggu (Cooldown) penggunaan Skill aktif sebanyak 1 Turn.",
-            "🔮 Orb of Absolute Clarity": "Menambahkan +40% peluang Critical Chance untuk seluruh variasi serangan.",
-            "🔥 Armor of the Overlord": "Memberikan 2.5x Lipat Damage murni & proteksi kekebalan mutlak dari kekalahan."
+            "🌌 Inti Singularitas": "Semua Atribut +150, Max HP/Stamina +300/+250",
+            "⚡ Mahkota Petir Transenden": "INT +120, AGI +100, Max Stamina +180",
+            "🔥 Bara Api Mistik Abadi": "STR +110, VIT +90, Max HP +200",
+            "⭐ Kitab Kebijaksanaan Langit": "Intelijen (INT) +100",
+            "👑 Jubah Kebesaran Kaisar": "Max HP +150, Max Stamina +100",
+            "💎 Kristal Inti Grandmaster": "STR & AGI masing-masing +80",
+            "🗡️ Belati Bayangan Legendaris": "Kelincahan (AGI) +90",
+            "🛡️ Perisai Perunggu Veteran": "Max HP +100, Vitality (VIT) +70",
+            "📜 Lencana Pengawal Disiplin": "INT & VIT masing-masing +50",
+            "⚡ Ramuan Energi Prodigy": "Max Stamina permanen +60",
+            "📜 Gulungan Ilmu Elit": "Intelijen (INT) +40",
+            "📘 Pena Emas Sarjana": "Intelijen (INT) +25",
+            "🔍 Kaca Pembesar Fokus": "Kelincahan (AGI) +20",
+            "🌿 Bibit Pohon Kebiasaan": "Vitality (VIT) +15",
+            "🥾 Sepatu Pengembara": "Max Stamina +20",
+            # Tambahan gear lama kamu
+            "🗡️ Steel Sword of Focus": "+15% Damage saat menyerang",
+            "🗡️ Excalibur of Focus": "+50% Damage & +15% INT Boost",
+            "🛡️ Aegis Shield of Willpower": "+30% Damage & kurangi penalty HP",
+            "💍 Ring of Endless Energy": "2x lipat bonus Streak Harian",
+            "👟 Boots of Hyper Productivity": "Hemat 30% konsumsi Stamina workout",
+            "👑 Crown of Unstoppable Discipline": "+75% Damage & bonus EXP berlimpah",
+            "⚔️ Scythe of Zero Delay": "200% Damage murni ke Boss Raid",
+            "📿 Amulet of Endless Vitality": "+50 Max Stamina",
+            "⌛ Cloak of Chronos": "Kurangi Cooldown Skill 1 Turn",
+            "🔮 Orb of Absolute Clarity": "+40% Critical Chance",
+            "🔥 Armor of the Overlord": "2.5x Damage murni & proteksi mutlak"
         }
 
-        # Gabungkan item unik dari kedua list secara bersih tanpa duplikat ganda
+        if "equipped_items" not in d:
+            d["equipped_items"] = []
+        if "inventory" not in d:
+            d["inventory"] = []
+
         unique_owned_items = list(set(d["inventory"] + d["equipped_items"]))
 
         if unique_owned_items:
             for item in unique_owned_items:
-                effect_explanation = item_effects_database.get(item, "Item khusus dengan efek misterius yang membantu produktivitasmu.")
+                effect_explanation = item_effects_database.get(item, "Item khusus penunjang produktivitas.")
                 is_equipped = item in d["equipped_items"]
                 
                 with st.container(border=True):
@@ -1357,25 +1376,25 @@ with tab_boss:
                         if not is_equipped:
                             if item not in ["💣 Procrastination Bomb", "🧪 Mega Elixir"]:
                                 if st.button("🟢 Pakai", key=f"equip_{item}", use_container_width=True):
-                                    # Pindahkan item secara bersih: hapus dari inventory, masukkan ke equipped
                                     if item in d["inventory"]:
                                         d["inventory"].remove(item)
                                     if item not in d["equipped_items"]:
                                         d["equipped_items"].append(item)
+                                    
                                     save_game()
-                                    st.success(f"Berhasil memakai {item}!")
+                                    st.success(f"Berhasil memakai {item}! Efek aktif.")
                                     st.rerun()
                             else:
                                 st.caption("Gunakan langsung di panel aksi")
                         else:
                             if st.button("🔴 Lepas", key=f"unequip_{item}", use_container_width=True):
-                                # Pindahkan item secara bersih: hapus dari equipped, masukkan ke inventory
                                 if item in d["equipped_items"]:
                                     d["equipped_items"].remove(item)
                                 if item not in d["inventory"]:
                                     d["inventory"].append(item)
+                                
                                 save_game()
-                                st.warning(f"Berhasil melepas {item}!")
+                                st.warning(f"Berhasil melepas {item}! Efek dinonaktifkan.")
                                 st.rerun()
         else:
             st.info("Tas inventori Nauval masih kosong. Selesaikan misi, belanja di shop, atau taklukkan Boss Raid untuk mengisinya!")
