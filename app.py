@@ -174,12 +174,128 @@ def log_activity(activity_name, value):
     d["activity_log"].append({"date": today_str, "activity": activity_name, "value": value})
 
 def update_title():
-    if d["level"] >= 30: d["title"] = "👑 THE PERFECT HUMAN EMPEROR"
-    elif d["level"] >= 20: d["title"] = "⚔️ Supreme Shadow Knight"
-    elif d["level"] >= 10: d["title"] = "🛡️ Guardian of Discipline"
-    elif d["level"] >= 5: d["title"] = "📜 Elite Initiate"
-    else: d["title"] = "🌱 Novice Initiate"
+    # Cek gelar lama sebelum di-update untuk mendeteksi kenaikan tier
+    old_title = d.get("title", "🌱 PEMULA")
 
+    if d["level"] >= 50:
+        d["title"] = "🌌 PENGUASA SINGULARITAS"
+        # Buff: +50% EXP Semua Atribut, -30% Biaya Stamina, +100% Drop Gold
+        reward_item = "🎁 Kotak Mitos Overlord"
+    elif d["level"] >= 45:
+        d["title"] = "⚡ PUNCAK TRANSCENDENT"
+        # Buff: +45% EXP Semua Atribut, -28% Biaya Stamina, +85% Drop Gold
+        reward_item = "📜 Scroll of Instant Focus"
+    elif d["level"] >= 40:
+        d["title"] = "🔥 PERINTIS MISTIK"
+        # Buff: +40% EXP Semua Atribut, -25% Biaya Stamina, +75% Drop Gold
+        reward_item = "🧪 Elixir Pemulih Stamina"
+    elif d["level"] >= 35:
+        d["title"] = "⭐ SAGE KEDISIPLINAN ILAHI"
+        # Buff: +35% EXP Semua Atribut, -22% Biaya Stamina, +65% Drop Gold
+        reward_item = "📜 Scroll of Instant Focus"
+    elif d["level"] >= 30:
+        d["title"] = "👑 KAISAR MANUSIA SEMPURNA"
+        # Buff: +30% EXP Semua Atribut, -20% Biaya Stamina, +55% Drop Gold
+        reward_item = "🎁 Kotak Mitos Overlord"
+    elif d["level"] >= 26:
+        d["title"] = "💎 GRANDMASTER LEGENDARIS"
+        # Buff: +25% EXP Semua Atribut, -17% Stamina, +45% Gold
+        reward_item = "🧪 Elixir Pemulih Stamina"
+    elif d["level"] >= 22:
+        d["title"] = "⚔️ KESATRIA BAYANGAN UTAMA"
+        # Buff: +20% EXP Semua Atribut, -15% Stamina, +38% Gold
+        reward_item = "📜 Scroll of Instant Focus"
+    elif d["level"] >= 18:
+        d["title"] = "🛡️ GARDA VETERAN"
+        # Buff: +17% EXP Semua Atribut, -12% Stamina, +30% Gold
+        reward_item = "🧪 Elixir Pemulih Stamina"
+    elif d["level"] >= 15:
+        d["title"] = "🛡️ PENGAWAL KEDISIPLINAN"
+        # Buff: +14% EXP Semua Atribut, -10% Stamina, +25% Gold
+        reward_item = "🧪 Elixir Pemulih Stamina"
+    elif d["level"] >= 12:
+        d["title"] = "⚡ PRODIGY YANG BANGKIT"
+        # Buff: +12% EXP Semua Atribut, -8% Stamina, +20% Gold
+        reward_item = "📜 Scroll of Instant Focus"
+    elif d["level"] >= 10:
+        d["title"] = "📜 INISIATIF ELIT"
+        # Buff: +10% EXP INT, -5% Stamina, +15% Gold
+        reward_item = "🧪 Elixir Pemulih Stamina"
+    elif d["level"] >= 8:
+        d["title"] = "📘 SARJANA TERJAGA"
+        # Buff: +8% EXP INT, +12% Gold
+        reward_item = "📜 Scroll of Instant Focus"
+    elif d["level"] >= 6:
+        d["title"] = "🔍 PENCARI DISIPLIN"
+        # Buff: +6% EXP INT, +10% Gold
+        reward_item = "🧪 Elixir Pemulih Stamina"
+    elif d["level"] >= 4:
+        d["title"] = "🌿 PEMagang FOKUS"
+        # Buff: +4% EXP INT, +5% Gold
+        reward_item = "🧪 Elixir Pemulih Stamina"
+    elif d["level"] >= 2:
+        d["title"] = "🌱 PENGEMBARA HARAPAN"
+        # Buff: +2% EXP INT
+        reward_item = "🧪 Elixir Pemulih Stamina"
+    else:
+        d["title"] = "🌱 PEMULA"
+        # Buff: Standar
+        reward_item = None
+
+    # Jika gelar berubah, otomatis berikan hadiah item ke inventory, jalankan efeknya, & notifikasi
+    if old_title != d["title"] and reward_item:
+        if "inventory" not in d:
+            d["inventory"] = []
+        d["inventory"].append(reward_item)
+        
+        # --- EFEK INSTAN ITEM SAAT DIDAPATKAN ---
+        effect_desc = ""
+        if reward_item == "🎁 Kotak Mitos Overlord":
+            d["gold"] = d.get("gold", 0) + 500
+            d["stamina"] = min(d.get("max_stamina", 100), d.get("stamina", 0) + 100)
+            effect_desc = "Bonus Efek: +500 Gold & Stamina Penuh Terisi!"
+        elif reward_item == "📜 Scroll of Instant Focus":
+            d["gold"] = d.get("gold", 0) + 200
+            effect_desc = "Bonus Efek: +200 Gold tambahan dari gulungan pengetahuan!"
+        elif reward_item == "🧪 Elixir Pemulih Stamina":
+            d["stamina"] = min(d.get("max_stamina", 100), d.get("stamina", 0) + 50)
+            effect_desc = "Bonus Efek: Memulihkan +50 Stamina secara instan!"
+
+        st.balloons()
+        st.success(f"🎉 SELAMAT NAUVAL! Naik Gelar ke **{d['title']}**!\n\n🎁 Hadiah Item: **{reward_item}** masuk ke Inventory!\n⚡ {effect_desc}")
+
+# --- UI DETAIL & INFORMASI TITLE YANG LEBIH MENARIK ---
+with st.expander("✨ Lihat Detail Gelar & Informasi Status Karakter", expanded=False):
+    st.markdown(
+        f"""
+        <div style="background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%); padding: 20px; border-radius: 14px; border: 2px solid #ff9a9e; color: white;">
+            <h3 style="margin-top: 0; color: #ff9a9e;">👑 Status Gelar Aktif: {d.get('title', 'PEMULA')}</h3>
+            <p style="margin-bottom: 5px;"><b>Level Karakter Saat Ini:</b> Level {d.get('level', 1)}</p>
+            <p style="margin-bottom: 15px;"><b>Master:</b> Nauval (Mode Mentor Akademik Aktif 🌸)</p>
+            <hr style="border-color: rgba(255,255,255,0.2);">
+            <h4 style="color: #fecfef; margin-bottom: 8px;">📜 Daftar Seluruh Tingkatan Gelar, Syarat & Efek Hadiahnya:</h4>
+            <ul style="padding-left: 20px; line-height: 1.6; font-size: 14px;">
+                <li><b>Level 50+ :</b> 🌌 PENGUASA SINGULARITAS <i>(Hadiah: Kotak Mitos Overlord — Efek: +500 Gold & Stamina Penuh)</i></li>
+                <li><b>Level 45+ :</b> ⚡ PUNCAK TRANSCENDENT <i>(Hadiah: Scroll of Instant Focus — Efek: +200 Gold)</i></li>
+                <li><b>Level 40+ :</b> 🔥 PERINTIS MISTIK <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
+                <li><b>Level 35+ :</b> ⭐ SAGE KEDISIPLINAN ILAHI <i>(Hadiah: Scroll of Instant Focus — Efek: +200 Gold)</i></li>
+                <li><b>Level 30+ :</b> 👑 KAISAR MANUSIA SEMPURNA <i>(Hadiah: Kotak Mitos Overlord — Efek: +500 Gold & Stamina Penuh)</i></li>
+                <li><b>Level 26+ :</b> 💎 GRANDMASTER LEGENDARIS <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
+                <li><b>Level 22+ :</b> ⚔️ KESATRIA BAYANGAN UTAMA <i>(Hadiah: Scroll of Instant Focus — Efek: +200 Gold)</i></li>
+                <li><b>Level 18+ :</b> 🛡️ GARDA VETERAN <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
+                <li><b>Level 15+ :</b> 🛡️ PENGAWAL KEDISIPLINAN <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
+                <li><b>Level 12+ :</b> ⚡ PRODIGY YANG BANGKIT <i>(Hadiah: Scroll of Instant Focus — Efek: +200 Gold)</i></li>
+                <li><b>Level 10+ :</b> 📜 INISIATIF ELIT <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
+                <li><b>Level 8+ :</b> 📘 SARJANA TERJAGA <i>(Hadiah: Scroll of Instant Focus — Efek: +200 Gold)</i></li>
+                <li><b>Level 6+ :</b> 🔍 PENCARI DISIPLIN <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
+                <li><b>Level 4+ :</b> 🌿 PEMagang FOKUS <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
+                <li><b>Level 2+ :</b> 🌱 PENGEMBARA HARAPAN <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
+                <li><b>Level 1 :</b> 🌱 PEMULA</li>
+            </ul>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 def check_achievements():
     now = datetime.now()
     current_year_week = f"{now.year}-W{now.isocalendar()[1]}"
