@@ -179,90 +179,148 @@ def update_title():
 
     if d["level"] >= 50:
         d["title"] = "🌌 PENGUASA SINGULARITAS"
-        # Buff: +50% EXP Semua Atribut, -30% Biaya Stamina, +100% Drop Gold
-        reward_item = "🎁 Kotak Mitos Overlord"
+        reward_item = "🌌 Inti Singularitas"
+        effect_type = "singularity"
     elif d["level"] >= 45:
         d["title"] = "⚡ PUNCAK TRANSCENDENT"
-        # Buff: +45% EXP Semua Atribut, -28% Biaya Stamina, +85% Drop Gold
-        reward_item = "📜 Scroll of Instant Focus"
+        reward_item = "⚡ Mahkota Petir Transenden"
+        effect_type = "transcendent"
     elif d["level"] >= 40:
         d["title"] = "🔥 PERINTIS MISTIK"
-        # Buff: +40% EXP Semua Atribut, -25% Biaya Stamina, +75% Drop Gold
-        reward_item = "🧪 Elixir Pemulih Stamina"
+        reward_item = "🔥 Bara Api Mistik Abadi"
+        effect_type = "mystic_fire"
     elif d["level"] >= 35:
         d["title"] = "⭐ SAGE KEDISIPLINAN ILAHI"
-        # Buff: +35% EXP Semua Atribut, -22% Biaya Stamina, +65% Drop Gold
-        reward_item = "📜 Scroll of Instant Focus"
+        reward_item = "⭐ Kitab Kebijaksanaan Langit"
+        effect_type = "divine_sage"
     elif d["level"] >= 30:
         d["title"] = "👑 KAISAR MANUSIA SEMPURNA"
-        # Buff: +30% EXP Semua Atribut, -20% Biaya Stamina, +55% Drop Gold
-        reward_item = "🎁 Kotak Mitos Overlord"
+        reward_item = "👑 Jubah Kebesaran Kaisar"
+        effect_type = "emperor_robe"
     elif d["level"] >= 26:
         d["title"] = "💎 GRANDMASTER LEGENDARIS"
-        # Buff: +25% EXP Semua Atribut, -17% Stamina, +45% Gold
-        reward_item = "🧪 Elixir Pemulih Stamina"
+        reward_item = "💎 Kristal Inti Grandmaster"
+        effect_type = "grandmaster_crystal"
     elif d["level"] >= 22:
         d["title"] = "⚔️ KESATRIA BAYANGAN UTAMA"
-        # Buff: +20% EXP Semua Atribut, -15% Stamina, +38% Gold
-        reward_item = "📜 Scroll of Instant Focus"
+        reward_item = "🗡️ Belati Bayangan Legendaris"
+        effect_type = "shadow_dagger"
     elif d["level"] >= 18:
         d["title"] = "🛡️ GARDA VETERAN"
-        # Buff: +17% EXP Semua Atribut, -12% Stamina, +30% Gold
-        reward_item = "🧪 Elixir Pemulih Stamina"
+        reward_item = "🛡️ Perisai Perunggu Veteran"
+        effect_type = "veteran_shield"
     elif d["level"] >= 15:
         d["title"] = "🛡️ PENGAWAL KEDISIPLINAN"
-        # Buff: +14% EXP Semua Atribut, -10% Stamina, +25% Gold
-        reward_item = "🧪 Elixir Pemulih Stamina"
+        reward_item = "📜 Lencana Pengawal Disiplin"
+        effect_type = "discipline_badge"
     elif d["level"] >= 12:
         d["title"] = "⚡ PRODIGY YANG BANGKIT"
-        # Buff: +12% EXP Semua Atribut, -8% Stamina, +20% Gold
-        reward_item = "📜 Scroll of Instant Focus"
+        reward_item = "⚡ Ramuan Energi Prodigy"
+        effect_type = "prodigy_potion"
     elif d["level"] >= 10:
         d["title"] = "📜 INISIATIF ELIT"
-        # Buff: +10% EXP INT, -5% Stamina, +15% Gold
-        reward_item = "🧪 Elixir Pemulih Stamina"
+        reward_item = "📜 Gulungan Ilmu Elit"
+        effect_type = "elite_scroll"
     elif d["level"] >= 8:
         d["title"] = "📘 SARJANA TERJAGA"
-        # Buff: +8% EXP INT, +12% Gold
-        reward_item = "📜 Scroll of Instant Focus"
+        reward_item = "📘 Pena Emas Sarjana"
+        effect_type = "scholar_pen"
     elif d["level"] >= 6:
         d["title"] = "🔍 PENCARI DISIPLIN"
-        # Buff: +6% EXP INT, +10% Gold
-        reward_item = "🧪 Elixir Pemulih Stamina"
+        reward_item = "🔍 Kaca Pembesar Fokus"
+        effect_type = "focus_glass"
     elif d["level"] >= 4:
         d["title"] = "🌿 PEMagang FOKUS"
-        # Buff: +4% EXP INT, +5% Gold
-        reward_item = "🧪 Elixir Pemulih Stamina"
+        reward_item = "🌿 Bibit Pohon Kebiasaan"
+        effect_type = "habit_seed"
     elif d["level"] >= 2:
         d["title"] = "🌱 PENGEMBARA HARAPAN"
-        # Buff: +2% EXP INT
-        reward_item = "🧪 Elixir Pemulih Stamina"
+        reward_item = "🥾 Sepatu Pengembara"
+        effect_type = "traveler_boots"
     else:
         d["title"] = "🌱 PEMULA"
-        # Buff: Standar
         reward_item = None
+        effect_type = None
 
-    # Jika gelar berubah, otomatis berikan hadiah item ke inventory, jalankan efeknya, & notifikasi
+    # Jika gelar berubah, berikan item spesifik & jalankan efek uniknya
     if old_title != d["title"] and reward_item:
         if "inventory" not in d:
             d["inventory"] = []
         d["inventory"].append(reward_item)
         
-        # --- EFEK INSTAN ITEM SAAT DIDAPATKAN ---
-        effect_desc = ""
-        if reward_item == "🎁 Kotak Mitos Overlord":
-            d["gold"] = d.get("gold", 0) + 500
-            d["stamina"] = min(d.get("max_stamina", 100), d.get("stamina", 0) + 100)
-            effect_desc = "Bonus Efek: +500 Gold & Stamina Penuh Terisi!"
-        elif reward_item == "📜 Scroll of Instant Focus":
-            d["gold"] = d.get("gold", 0) + 200
-            effect_desc = "Bonus Efek: +200 Gold tambahan dari gulungan pengetahuan!"
-        elif reward_item == "🧪 Elixir Pemulih Stamina":
-            d["stamina"] = min(d.get("max_stamina", 100), d.get("stamina", 0) + 50)
-            effect_desc = "Bonus Efek: Memulihkan +50 Stamina secara instan!"
+        if "attributes" not in d: 
+            d["attributes"] = {"INT": 0, "STR": 0, "VIT": 0, "AGI": 0}
+
+        # --- EFEK KHUSUS MASING-MASING ITEM DI TIAP TINGKATAN ---
+        if effect_type == "singularity":
+            d["max_hp"] += 300; d["max_stamina"] += 250; d["hp"] = d["max_hp"]; d["stamina"] = d["max_stamina"]
+            for k in d["attributes"]: d["attributes"][k] += 150
+            d["gold"] += 10000
+            effect_desc = "🌌 Efek Inti Singularitas: Seluruh Atribut +150, Max HP/Stamina +300/+250, & +10.000 Gold!"
+        elif effect_type == "transcendent":
+            d["max_stamina"] += 180; d["stamina"] = d["max_stamina"]
+            d["attributes"]["INT"] += 120; d["attributes"]["AGI"] += 100
+            d["gold"] += 7500
+            effect_desc = "⚡ Efek Mahkota Petir: INT +120, AGI +100, Max Stamina +180, & +7.500 Gold!"
+        elif effect_type == "mystic_fire":
+            d["max_hp"] += 200; d["hp"] = d["max_hp"]
+            d["attributes"]["STR"] += 110; d["attributes"]["VIT"] += 90
+            d["gold"] += 5000
+            effect_desc = "🔥 Efek Bara Mistik: STR +110, VIT +90, Max HP +200, & +5.000 Gold!"
+        elif effect_type == "divine_sage":
+            d["attributes"]["INT"] += 100
+            d["gold"] += 4000
+            effect_desc = "⭐ Efek Kitab Langit: Atribut Intelijen (INT) meroket +100 & +4.000 Gold!"
+        elif effect_type == "emperor_robe":
+            d["max_hp"] += 150; d["max_stamina"] += 100; d["hp"] = d["max_hp"]; d["stamina"] = d["max_stamina"]
+            d["gold"] += 3500
+            effect_desc = "👑 Efek Jubah Kaisar: Max HP +150, Max Stamina +100, & +3.500 Gold Kas Negara!"
+        elif effect_type == "grandmaster_crystal":
+            d["attributes"]["STR"] += 80; d["attributes"]["AGI"] += 80
+            d["gold"] += 2500
+            effect_desc = "💎 Efek Kristal Grandmaster: STR & AGI masing-masing +80, & +2.500 Gold!"
+        elif effect_type == "shadow_dagger":
+            d["attributes"]["AGI"] += 90
+            d["gold"] += 2000
+            effect_desc = "🗡️ Efek Belati Bayangan: Kelincahan (AGI) meningkat +90 & +2.000 Gold!"
+        elif effect_type == "veteran_shield":
+            d["max_hp"] += 100; d["hp"] = d["max_hp"]
+            d["attributes"]["VIT"] += 70
+            d["gold"] += 1500
+            effect_desc = "🛡️ Efek Perisai Veteran: Max HP +100, Vitality (VIT) +70, & +1.500 Gold!"
+        elif effect_type == "discipline_badge":
+            d["attributes"]["INT"] += 50; d["attributes"]["VIT"] += 50
+            d["gold"] += 1000
+            effect_desc = "📜 Efek Lencana Disiplin: INT & VIT masing-masing +50, & +1.000 Gold!"
+        elif effect_type == "prodigy_potion":
+            d["max_stamina"] += 60; d["stamina"] = d["max_stamina"]
+            d["gold"] += 800
+            effect_desc = "⚡ Efek Ramuan Prodigy: Max Stamina permanen +60 & +800 Gold!"
+        elif effect_type == "elite_scroll":
+            d["attributes"]["INT"] += 40
+            d["gold"] += 600
+            effect_desc = "📜 Efek Gulungan Elit: Intelijen (INT) +40 & +600 Gold!"
+        elif effect_type == "scholar_pen":
+            d["attributes"]["INT"] += 25
+            d["gold"] += 400
+            effect_desc = "📘 Efek Pena Emas: Intelijen (INT) +25 & +400 Gold!"
+        elif effect_type == "focus_glass":
+            d["attributes"]["AGI"] += 20
+            d["gold"] += 300
+            effect_desc = "🔍 Efek Kaca Fokus: Kelincahan (AGI) +20 & +300 Gold!"
+        elif effect_type == "habit_seed":
+            d["attributes"]["VIT"] += 15
+            d["gold"] += 200
+            effect_desc = "🌿 Efek Bibit Kebiasaan: Vitality (VIT) +15 & +200 Gold!"
+        elif effect_type == "traveler_boots":
+            d["max_stamina"] += 20; d["stamina"] = d["max_stamina"]
+            d["gold"] += 100
+            effect_desc = "🥾 Efek Sepatu Pengembara: Max Stamina +20 & +100 Gold!"
+        else:
+            effect_desc = "Mendapatkan item baru."
 
         st.balloons()
-        st.success(f"🎉 SELAMAT NAUVAL! Naik Gelar ke **{d['title']}**!\n\n🎁 Hadiah Item: **{reward_item}** masuk ke Inventory!\n⚡ {effect_desc}")
+        st.success(f"🎉 SELAMAT NAUVAL! Naik Gelar ke **{d['title']}**!\n\n🎁 Hadiah Item Unik: **{reward_item}** masuk ke Inventory!\n✨ {effect_desc}")
 
 # --- UI DETAIL & INFORMASI TITLE YANG LEBIH MENARIK ---
 with st.expander("✨ Lihat Detail Gelar & Informasi Status Karakter", expanded=False):
@@ -273,24 +331,24 @@ with st.expander("✨ Lihat Detail Gelar & Informasi Status Karakter", expanded=
             <p style="margin-bottom: 5px;"><b>Level Karakter Saat Ini:</b> Level {d.get('level', 1)}</p>
             <p style="margin-bottom: 15px;"><b>Master:</b> Nauval (Mode Mentor Akademik Aktif 🌸)</p>
             <hr style="border-color: rgba(255,255,255,0.2);">
-            <h4 style="color: #fecfef; margin-bottom: 8px;">📜 Daftar Seluruh Tingkatan Gelar, Syarat & Efek Hadiahnya:</h4>
+            <h4 style="color: #fecfef; margin-bottom: 8px;">📜 Daftar Seluruh Tingkatan Gelar & Hadiah Item Uniknya:</h4>
             <ul style="padding-left: 20px; line-height: 1.6; font-size: 14px;">
-                <li><b>Level 50+ :</b> 🌌 PENGUASA SINGULARITAS <i>(Hadiah: Kotak Mitos Overlord — Efek: +500 Gold & Stamina Penuh)</i></li>
-                <li><b>Level 45+ :</b> ⚡ PUNCAK TRANSCENDENT <i>(Hadiah: Scroll of Instant Focus — Efek: +200 Gold)</i></li>
-                <li><b>Level 40+ :</b> 🔥 PERINTIS MISTIK <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
-                <li><b>Level 35+ :</b> ⭐ SAGE KEDISIPLINAN ILAHI <i>(Hadiah: Scroll of Instant Focus — Efek: +200 Gold)</i></li>
-                <li><b>Level 30+ :</b> 👑 KAISAR MANUSIA SEMPURNA <i>(Hadiah: Kotak Mitos Overlord — Efek: +500 Gold & Stamina Penuh)</i></li>
-                <li><b>Level 26+ :</b> 💎 GRANDMASTER LEGENDARIS <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
-                <li><b>Level 22+ :</b> ⚔️ KESATRIA BAYANGAN UTAMA <i>(Hadiah: Scroll of Instant Focus — Efek: +200 Gold)</i></li>
-                <li><b>Level 18+ :</b> 🛡️ GARDA VETERAN <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
-                <li><b>Level 15+ :</b> 🛡️ PENGAWAL KEDISIPLINAN <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
-                <li><b>Level 12+ :</b> ⚡ PRODIGY YANG BANGKIT <i>(Hadiah: Scroll of Instant Focus — Efek: +200 Gold)</i></li>
-                <li><b>Level 10+ :</b> 📜 INISIATIF ELIT <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
-                <li><b>Level 8+ :</b> 📘 SARJANA TERJAGA <i>(Hadiah: Scroll of Instant Focus — Efek: +200 Gold)</i></li>
-                <li><b>Level 6+ :</b> 🔍 PENCARI DISIPLIN <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
-                <li><b>Level 4+ :</b> 🌿 PEMagang FOKUS <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
-                <li><b>Level 2+ :</b> 🌱 PENGEMBARA HARAPAN <i>(Hadiah: Elixir Pemulih Stamina — Efek: +50 Stamina)</i></li>
-                <li><b>Level 1 :</b> 🌱 PEMULA</li>
+                <li><b>Level 50+ :</b> 🌌 PENGUASA SINGULARITAS ➔ <i>Hadiah: 🌌 Inti Singularitas (Semua Atribut +150, Max HP/Stamina +300/+250)</i></li>
+                <li><b>Level 45+ :</b> ⚡ PUNCAK TRANSCENDENT ➔ <i>Hadiah: ⚡ Mahkota Petir Transenden (INT +120, AGI +100, Max Stamina +180)</i></li>
+                <li><b>Level 40+ :</b> 🔥 PERINTIS MISTIK ➔ <i>Hadiah: 🔥 Bara Api Mistik Abadi (STR +110, VIT +90, Max HP +200)</i></li>
+                <li><b>Level 35+ :</b> ⭐ SAGE KEDISIPLINAN ILAHI ➔ <i>Hadiah: ⭐ Kitab Kebijaksanaan Langit (INT +100)</i></li>
+                <li><b>Level 30+ :</b> 👑 KAISAR MANUSIA SEMPURNA ➔ <i>Hadiah: 👑 Jubah Kebesaran Kaisar (Max HP +150, Max Stamina +100)</i></li>
+                <li><b>Level 26+ :</b> 💎 GRANDMASTER LEGENDARIS ➔ <i>Hadiah: 💎 Kristal Inti Grandmaster (STR & AGI +80)</i></li>
+                <li><b>Level 22+ :</b> ⚔️ KESATRIA BAYANGAN UTAMA ➔ <i>Hadiah: 🗡️ Belati Bayangan Legendaris (AGI +90)</i></li>
+                <li><b>Level 18+ :</b> 🛡️ GARDA VETERAN ➔ <i>Hadiah: 🛡️ Perisai Perunggu Veteran (Max HP +100, VIT +70)</i></li>
+                <li><b>Level 15+ :</b> 🛡️ PENGAWAL KEDISIPLINAN ➔ <i>Hadiah: 📜 Lencana Pengawal Disiplin (INT & VIT +50)</i></li>
+                <li><b>Level 12+ :</b> ⚡ PRODIGY YANG BANGKIT ➔ <i>Hadiah: ⚡ Ramuan Energi Prodigy (Max Stamina +60)</i></li>
+                <li><b>Level 10+ :</b> 📜 INISIATIF ELIT ➔ <i>Hadiah: 📜 Gulungan Ilmu Elit (INT +40)</i></li>
+                <li><b>Level 8+ :</b> 📘 SARJANA TERJAGA ➔ <i>Hadiah: 📘 Pena Emas Sarjana (INT +25)</i></li>
+                <li><b>Level 6+ :</b> 🔍 PENCARI DISIPLIN ➔ <i>Hadiah: 🔍 Kaca Pembesar Fokus (AGI +20)</i></li>
+                <li><b>Level 4+ :</b> 🌿 PEMagang FOKUS ➔ <i>Hadiah: 🌿 Bibit Pohon Kebiasaan (VIT +15)</i></li>
+                <li><b>Level 2+ :</b> 🌱 PENGEMBARA HARAPAN ➔ <i>Hadiah: 🥾 Sepatu Pengembara (Max Stamina +20)</i></li>
+                <li><b>Level 1 :</b> 🌱 PEMULA ➔ <i>(Tanpa Hadiah Khusus)</i></li>
             </ul>
         </div>
         """,
