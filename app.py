@@ -750,7 +750,7 @@ with tab_quest:
                 save_game()
                 st.rerun()
         else:
-            st.info("⚠️ Kamu tidak memiliki 'Scroll of Instant Focus' di dalam Inventory. Beli di Shop atau dapatkan dari Gacha Wheel!")cha Wheel!")
+            st.info("⚠️ Kamu tidak memiliki 'Scroll of Instant Focus' di dalam Inventory. Beli di Shop atau dapatkan dari Gacha Wheel!")
 # ================= TAB 2: SKILL TREE =================
 with tab_skill:
     st.subheader("🌳 Skill Tree (Perluasan Cabang Keterampilan)")
