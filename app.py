@@ -642,7 +642,9 @@ st.divider()
 # ==========================================
 tab_quest, tab_skill, tab_boss, tab_penalty, tab_shop, tab_equips, tab_gacha, tab_pet, tab_achieve, tab_analytics = st.tabs([
     "⚔️ Quest", "🌳 Skill Tree", "👾 Boss", "🚨 Penalty", "🧪 Shop", "🗡️ Armory", "🎡 Gacha", "🐾 Pet", "🏆 Badges", "📈 Analytics"
-])with st.expander("📊 Lihat Atribut, Skill & Keuntungan Pasif Karakter", expanded=False):
+])
+
+with st.expander("📊 Lihat Atribut, Skill & Keuntungan Pasif Karakter", expanded=False):
     s1, s2, s3, s4 = st.columns(4)
     
     val_str = d["stats"]["STR"]
@@ -753,7 +755,6 @@ tab_quest, tab_skill, tab_boss, tab_penalty, tab_shop, tab_equips, tab_gacha, ta
         st.markdown(f"- {benefit}")
         
     st.info(f"💡 **Status Efek Aktif Saat Ini:** Bonus EXP +{bonus_exp_pct}%, Bonus Damage +{bonus_damage_pct}%, Critical +{bonus_crit_pct}%, Hemat Stamina {stamina_save_pct}%")
-
 # ================= TAB 1: ADVANCED AI-GUIDED QUEST & MENTOR SYSTEM =================
 with tab_quest:
     st.subheader("📌 Papan Misi Disiplin & AI Academic Mentor")
