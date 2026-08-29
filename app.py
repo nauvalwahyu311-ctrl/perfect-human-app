@@ -633,7 +633,16 @@ if d["active_buffs"] or d["equipped_items"] or d["inventory"]:
     for inv in d["inventory"]:
         st.warning(f"🎒 Item Storage: **{inv}**")
 
-with st.expander("📊 Lihat Atribut, Skill & Keuntungan Pasif Karakter", expanded=False):
+
+
+st.divider()
+
+# ==========================================
+# 📑 TAB UTAMA APLIKASI
+# ==========================================
+tab_quest, tab_skill, tab_boss, tab_penalty, tab_shop, tab_equips, tab_gacha, tab_pet, tab_achieve, tab_analytics = st.tabs([
+    "⚔️ Quest", "🌳 Skill Tree", "👾 Boss", "🚨 Penalty", "🧪 Shop", "🗡️ Armory", "🎡 Gacha", "🐾 Pet", "🏆 Badges", "📈 Analytics"
+])with st.expander("📊 Lihat Atribut, Skill & Keuntungan Pasif Karakter", expanded=False):
     s1, s2, s3, s4 = st.columns(4)
     
     val_str = d["stats"]["STR"]
@@ -647,78 +656,103 @@ with st.expander("📊 Lihat Atribut, Skill & Keuntungan Pasif Karakter", expand
     s4.metric("🛡️ VIT", val_vit)
 
     st.markdown("---")
-    st.markdown("### 🌟 Keuntungan Pasif Atribut Aktif")
+    st.markdown("### 🌟 Keuntungan Pasif Atribut Aktif & Efek Nyatanya")
+
+    # Variabel penampung bonus agar terbaca oleh sistem game
+    bonus_damage_pct = 0
+    bonus_exp_pct = 0
+    bonus_crit_pct = 0
+    stamina_save_pct = 0
 
     passive_benefits = []
 
-    # Efek dari STR (Kekuatan Fisik / Workout)
+    # --- 1. STR (Bonus Damage Fisik / Workout) ---
     if val_str >= 200:
-        passive_benefits.append("💪 **God of War (STR 200+)**: Serangan fisik mutlak! Damage workout meroket +100% & menembus armor musuh.")
+        bonus_damage_pct = 100
+        passive_benefits.append("💪 **God of War (STR 200+)**: Damage workout meroket **+100%** & menembus armor!")
     elif val_str >= 150:
-        passive_benefits.append("💪 **Colossal Might (STR 150+)**: Kekuatan raksasa! Damage workout meningkat +70%.")
+        bonus_damage_pct = 70
+        passive_benefits.append("💪 **Colossal Might (STR 150+)**: Damage workout meningkat **+70%**.")
     elif val_str >= 100:
-        passive_benefits.append("💪 **Berserker Aura (STR 100+)**: Aura petarung sejati! Damage workout meningkat +45%.")
+        bonus_damage_pct = 45
+        passive_benefits.append("💪 **Berserker Aura (STR 100+)**: Damage workout meningkat **+45%**.")
     elif val_str >= 50:
-        passive_benefits.append("💪 **Titan Strength (STR 50+)**: Serangan fisik & damage workout meningkat +25%.")
+        bonus_damage_pct = 25
+        passive_benefits.append("💪 **Titan Strength (STR 50+)**: Damage workout meningkat **+25%**.")
     elif val_str >= 25:
-        passive_benefits.append("💪 **Power Surge (STR 25+)**: Bonus damage fisik dasar meningkat +10%.")
+        bonus_damage_pct = 10
+        passive_benefits.append("💪 **Power Surge (STR 25+)**: Bonus damage fisik dasar meningkat **+10%**.")
     else:
-        passive_benefits.append("💪 **STR Pasif**: Capai STR 25 untuk membuka bonus damage fisik.")
+        passive_benefits.append("💪 *STR Pasif belum aktif (Min. STR 25)*")
 
-    # Efek dari INT (Intelijen / Belajar & Akademik)
+    # --- 2. INT (Bonus EXP Belajar & Kuis) ---
     if val_int >= 200:
-        passive_benefits.append("🧠 **Omnipotent Mind (INT 200+)**: Pikiran tanpa batas! Perolehan EXP belajar & kuis meroket +120%.")
+        bonus_exp_pct = 120
+        passive_benefits.append("🧠 **Omnipotent Mind (INT 200+)**: EXP belajar & kuis meroket **+120%**!")
     elif val_int >= 150:
-        passive_benefits.append("🧠 **Cosmic Sage (INT 150+)**: Kebijaksanaan kosmik! Perolehan EXP belajar meningkat +85%.")
+        bonus_exp_pct = 85
+        passive_benefits.append("🧠 **Cosmic Sage (INT 150+)**: EXP belajar meningkat **+85%**.")
     elif val_int >= 100:
-        passive_benefits.append("🧠 **Enlightened Scholar (INT 100+)**: Pemahaman tingkat tinggi! Perolehan EXP belajar meningkat +50%.")
+        bonus_exp_pct = 50
+        passive_benefits.append("🧠 **Enlightened Scholar (INT 100+)**: EXP belajar meningkat **+50%**.")
     elif val_int >= 50:
-        passive_benefits.append("🧠 **Omniscient Mind (INT 50+)**: Perolehan EXP belajar & kuis meroket +30%.")
+        bonus_exp_pct = 30
+        passive_benefits.append("🧠 **Omniscient Mind (INT 50+)**: EXP belajar & kuis meroket **+30%**.")
     elif val_int >= 25:
-        passive_benefits.append("🧠 **Sharp Focus (INT 25+)**: Bonus EXP belajar meningkat +15%.")
+        bonus_exp_pct = 15
+        passive_benefits.append("🧠 **Sharp Focus (INT 25+)**: Bonus EXP belajar meningkat **+15%**.")
     else:
-        passive_benefits.append("🧠 **INT Pasif**: Capai INT 25 untuk membuka bonus EXP belajar.")
+        passive_benefits.append("🧠 *INT Pasif belum aktif (Min. INT 25)*")
 
-    # Efek dari AGI (Kelincahan / Kecepatan & Efisiensi Waktu)
+    # --- 3. AGI (Peluang Critical Hit) ---
     if val_agi >= 200:
-        passive_benefits.append("⚡ **Speed of Light (AGI 200+)**: Kecepatan cahaya! Cooldown skill aktif tereduksi drastis & Critical Chance +100%.")
+        bonus_crit_pct = 100
+        passive_benefits.append("⚡ **Speed of Light (AGI 200+)**: Critical Chance **+100%** (Selalu Critical!)")
     elif val_agi >= 150:
-        passive_benefits.append("⚡ **Chronos Master (AGI 150+)**: Penguasa waktu! Peluang Critical Chance meningkat +70%.")
+        bonus_crit_pct = 70
+        passive_benefits.append("⚡ **Chronos Master (AGI 150+)**: Critical Chance meningkat **+70%**.")
     elif val_agi >= 100:
-        passive_benefits.append("⚡ **Phantom Step (AGI 100+)**: Gerakan bayangan! Peluang Critical Chance meningkat +40%.")
+        bonus_crit_pct = 40
+        passive_benefits.append("⚡ **Phantom Step (AGI 100+)**: Critical Chance meningkat **+40%**.")
     elif val_agi >= 50:
-        passive_benefits.append("⚡ **Chronos Reflex (AGI 50+)**: Pengurangan Cooldown skill aktif maksimal & kesempatan Critical +25%.")
+        bonus_crit_pct = 25
+        passive_benefits.append("⚡ **Chronos Reflex (AGI 50+)**: Critical Chance meningkat **+25%**.")
     elif val_agi >= 25:
-        passive_benefits.append("⚡ **Swift Motion (AGI 25+)**: Peluang Critical Chance serangan meningkat +10%.")
+        bonus_crit_pct = 10
+        passive_benefits.append("⚡ **Swift Motion (AGI 25+)**: Critical Chance meningkat **+10%**.")
     else:
-        passive_benefits.append("⚡ **AGI Pasif**: Capai AGI 25 untuk membuka peningkatan Critical Chance.")
+        passive_benefits.append("⚡ *AGI Pasif belum aktif (Min. AGI 25)*")
 
-    # Efek dari VIT (Vitalitas / Ketahanan & Stamina)
+    # --- 4. VIT (Penghematan Konsumsi Stamina) ---
     if val_vit >= 200:
-        passive_benefits.append("🛡️ **Immortal Body (VIT 200+)**: Ketahanan abadi! Konsumsi Stamina harian dihemat -80% & regenerasi HP penuh tiap turn.")
+        stamina_save_pct = 80
+        passive_benefits.append("🛡️ **Immortal Body (VIT 200+)**: Konsumsi Stamina dihemat **-80%**!")
     elif val_vit >= 150:
-        passive_benefits.append("🛡️ **Indestructible Core (VIT 150+)**: Inti tak tergoyahkan! Pengurangan konsumsi Stamina sebesar -65%.")
+        stamina_save_pct = 65
+        passive_benefits.append("🛡️ **Indestructible Core (VIT 150+)**: Konsumsi Stamina dihemat **-65%**.")
     elif val_vit >= 100:
-        passive_benefits.append("🛡️ **Adamantine Shield (VIT 100+)**: Perisai adamantium! Pengurangan konsumsi Stamina sebesar -45%.")
+        stamina_save_pct = 45
+        passive_benefits.append("🛡️ **Adamantine Shield (VIT 100+)**: Konsumsi Stamina dihemat **-45%**.")
     elif val_vit >= 50:
-        passive_benefits.append("🛡️ **Iron Fortress (VIT 50+)**: Pengurangan konsumsi Stamina harian sebesar -35% & Max HP ekstra.")
+        stamina_save_pct = 35
+        passive_benefits.append("🛡️ **Iron Fortress (VIT 50+)**: Konsumsi Stamina dihemat **-35%**.")
     elif val_vit >= 25:
-        passive_benefits.append("🛡️ **Sturdy Body (VIT 25+)**: Penghematan konsumsi Stamina sebesar -15%.")
+        stamina_save_pct = 15
+        passive_benefits.append("🛡️ **Sturdy Body (VIT 25+)**: Konsumsi Stamina dihemat **-15%**.")
     else:
-        passive_benefits.append("🛡️ **VIT Pasif**: Capai VIT 25 untuk membuka efisiensi Stamina.")
+        passive_benefits.append("🛡️ *VIT Pasif belum aktif (Min. VIT 25)*")
 
-    # Tampilkan ke UI Streamlit
+    # Simpan nilai bonus ini ke dalam dictionary `d` supaya bisa dipakai di fungsi lain (seperti saat nambah EXP atau kurang stamina)
+    d["passive_bonus_exp"] = bonus_exp_pct
+    d["passive_bonus_damage"] = bonus_damage_pct
+    d["passive_bonus_crit"] = bonus_crit_pct
+    d["passive_stamina_save"] = stamina_save_pct
+
+    # Tampilkan daftar keuntungan pasif ke UI
     for benefit in passive_benefits:
         st.markdown(f"- {benefit}")
-
-st.divider()
-
-# ==========================================
-# 📑 TAB UTAMA APLIKASI
-# ==========================================
-tab_quest, tab_skill, tab_boss, tab_penalty, tab_shop, tab_equips, tab_gacha, tab_pet, tab_achieve, tab_analytics = st.tabs([
-    "⚔️ Quest", "🌳 Skill Tree", "👾 Boss", "🚨 Penalty", "🧪 Shop", "🗡️ Armory", "🎡 Gacha", "🐾 Pet", "🏆 Badges", "📈 Analytics"
-])
+        
+    st.info(f"💡 **Status Efek Aktif Saat Ini:** Bonus EXP +{bonus_exp_pct}%, Bonus Damage +{bonus_damage_pct}%, Critical +{bonus_crit_pct}%, Hemat Stamina {stamina_save_pct}%")
 
 # ================= TAB 1: ADVANCED AI-GUIDED QUEST & MENTOR SYSTEM =================
 with tab_quest:
