@@ -1669,5 +1669,5 @@ with tab_analytics:
     if d["activity_log"]:
         df = pd.DataFrame(d["activity_log"])
         st.bar_chart(df, x="date", y="value", color="activity")
-     else:
+    else:
         st.info("Belum ada data aktivitas.")
