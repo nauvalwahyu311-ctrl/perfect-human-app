@@ -1192,27 +1192,227 @@ with tab_equips:
                     save_game()
                     st.rerun()
 
-# ================= TAB 7: GACHA =================
+# ================= TAB 7: GACHA SPIN WHEEL (ULTRA COMPLEX & EPIC ANIMATED) =================
 with tab_gacha:
-    st.subheader("🎡 Daily Spin Wheel")
+    import time
+    
+    st.subheader("🎡 Mega Gacha Spin Wheel - Hall of Fortune")
+    st.caption("Putar roda keberuntungan tingkat lanjut! Rasakan sensasi animasi spin real-time, sistem Tier Gacha (Bronze, Silver, Gold, Prismatic), dan ragam hadiah legendaris yang disesuaikan dengan Streak-mu, Nauval.")
+    
     today_str = str(date.today())
+    
+    # Inisialisasi state gacha di session_state
+    if "gacha_tier" not in st.session_state:
+        st.session_state["gacha_tier"] = "Silver" # Default tier harian
+    if "is_spinning" not in st.session_state:
+        st.session_state["is_spinning"] = False
+    if "gacha_history" not in st.session_state:
+        st.session_state["gacha_history"] = []
+
+    # Hitung Streak Multiplier & Level Keberuntungan
+    streak_multiplier = 1.0 + (d["streak"] * 0.15)
+    
+    # Dashboard Metrik Gacha
+    mg1, mg2, mg3, mg4 = st.columns(4)
+    mg1.metric("🔥 Streak Aktif", f"{d['streak']} Hari")
+    mg2.metric("⚡ Multiplier Reward", f"{round(streak_multiplier, 2)}x")
+    mg3.metric("🎫 Status Tiket Harian", "Tersedia" if d["last_gacha_date"] != today_str else "Sudah Diklaim")
+    mg4.metric("📦 Riwayat Gacha", f"{len(st.session_state['gacha_history'])} Item")
+
+    st.markdown("---")
+
+    # --- POOL HADIAH GACHA SUPER KOMPLEKS (DIKELOMPOKKAN BERDASARKAN KATEGORI & RARITY) ---
+    epic_wheel_pool = [
+        # --- COMMON (Kategori: Sumber Daya Kecil) ---
+        {"name": "🪙 75 Gold Nugget", "type": "gold", "val": 75, "icon": "🪙", "rarity": "Common", "weight": 25},
+        {"name": "✨ 120 Spark EXP", "type": "exp", "val": 120, "icon": "✨", "rarity": "Common", "weight": 25},
+        {"name": "⚡ +25 Stamina Flask", "type": "stamina", "val": 25, "icon": "⚡", "rarity": "Common", "weight": 20},
+        
+        # --- UNCOMMON (Kategori: Sumber Daya Menengah & Konsumtif) ---
+        {"name": "🪙 200 Gold Pouch", "type": "gold", "val": 200, "icon": "🪙", "rarity": "Uncommon", "weight": 15},
+        {"name": "✨ 350 Radiant EXP", "type": "exp", "val": 350, "icon": "✨", "rarity": "Uncommon", "weight": 15},
+        {"name": "💣 Procrastination Bomb", "type": "item", "val": "💣 Procrastination Bomb", "icon": "💣", "rarity": "Uncommon", "weight": 10},
+        {"name": "🧪 Mega Elixir", "type": "item", "val": "🧪 Mega Elixir", "icon": "🧪", "rarity": "Uncommon", "weight": 10},
+        
+        # --- RARE (Kategori: Gear Dasar & Buff Sementara) ---
+        {"name": "🗡️ Steel Sword of Focus", "type": "item", "val": "🗡️ Steel Sword of Focus", "icon": "🗡️", "rarity": "Rare", "weight": 6},
+        {"name": "🛡️ Aegis Shield of Willpower", "type": "item", "val": "🛡️ Aegis Shield of Willpower", "icon": "🛡️", "rarity": "Rare", "weight": 5},
+        {"name": "💍 Ring of Endless Energy", "type": "item", "val": "💍 Ring of Endless Energy", "icon": "💍", "rarity": "Rare", "weight": 5},
+        
+        # --- EPIC (Kategori: Gear Tingkat Lanjut & Bonus Atribut) ---
+        {"name": "👟 Boots of Hyper Productivity", "type": "item", "val": "👟 Boots of Hyper Productivity", "icon": "👟", "rarity": "Epic", "weight": 3},
+        {"name": "📿 Amulet of Endless Vitality", "type": "item", "val": "📿 Amulet of Endless Vitality", "icon": "📿", "rarity": "Epic", "weight": 3},
+        {"name": "⌛ Cloak of Chronos", "type": "item", "val": "⌛ Cloak of Chronos", "icon": "⌛", "rarity": "Epic", "weight": 2},
+        {"name": "🔮 Orb of Absolute Clarity", "type": "item", "val": "🔮 Orb of Absolute Clarity", "icon": "🔮", "rarity": "Epic", "weight": 2},
+        
+        # --- LEGENDARY (Kategori: Item Dewa & Harta Karun Utama) ---
+        {"name": "💎 JACKPOT GRAND 1,000 Gold!", "type": "gold", "val": 1000, "icon": "💎", "rarity": "Legendary", "weight": 1.5},
+        {"name": "🗡️ Excalibur of Focus", "type": "item", "val": "🗡️ Excalibur of Focus", "icon": "⚔️", "rarity": "Legendary", "weight": 1},
+        {"name": "👑 Crown of Unstoppable Discipline", "type": "item", "val": "👑 Crown of Unstoppable Discipline", "icon": "👑", "rarity": "Legendary", "weight": 0.8},
+        {"name": "⚔️ Scythe of Zero Delay", "type": "item", "val": "⚔️ Scythe of Zero Delay", "icon": "🔪", "rarity": "Legendary", "weight": 0.5},
+        {"name": "🔥 Armor of the Overlord", "type": "item", "val": "🔥 Armor of the Overlord", "icon": "🛡️", "rarity": "Legendary", "weight": 0.3}
+    ]
+
+    # Cek Buff Clover of Luck untuk memodifikasi bobot drop rate
+    has_clover = any(b["name"] == "🍀 Clover of Luck" for b in d["active_buffs"])
+    if has_clover:
+        st.success("🍀 Clover of Luck aktif! Keberuntunganmu meningkat: Bobot item Epic & Legendary dilipatgandakan!")
+        # Modifikasi bobot jika clover aktif (tingkatkan item kategori Rare, Epic, Legendary)
+        for item in epic_wheel_pool:
+            if item["rarity"] in ["Rare", "Epic", "Legendary"]:
+                item["weight"] *= 2.5
+
+    # Area Kontainer Utama Roda Gacha
+    spin_display_container = st.empty()
+
     if d["last_gacha_date"] == today_str:
-        st.info("⏰ Sudah Spin hari ini. Kembali besok!")
+        spin_display_container.markdown(
+            """
+            <div style="text-align: center; padding: 40px; background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%); border-radius: 16px; border: 2px dashed #555;">
+                <h2 style="color: #ff4b4b;">🔒 Tiket Spin Hari Ini Sudah Digunakan</h2>
+                <p style="color: #ccc; font-size: 16px;">Roda keberuntungan sedang dalam cooldown pengisian energi kosmik. Silakan kembali besok untuk memutar ulang, Nauval!</p>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
     else:
-        if st.button("🎰 Putar Spin Harian", use_container_width=True):
+        # Pilihan Mode Spin (Bisa Normal atau Menggunakan Gold Tambahan jika ingin gacha ekstra)
+        col_opt1, col_opt2 = st.columns(2)
+        with col_opt1:
+            st.info("🎟️ **Spin Harian Utama:** Gratis (1x Sehari)")
+        with col_opt2:
+            extra_spin_cost = 250
+            if st.button(f"💎 Beli Extra Spin (🪙 {extra_spin_cost} Gold)", use_container_width=True):
+                if d["gold"] >= extra_spin_cost:
+                    d["gold"] -= extra_spin_cost
+                    # Izinkan spin instan dengan membuka paksa temporary flag
+                    d["last_gacha_date"] = "" # Reset sementara untuk extra spin
+                    st.success("💎 Extra Spin dibeli! Silakan putar rodanya sekarang!")
+                    save_game()
+                    st.rerun()
+                else:
+                    st.warning("Gold kamu tidak cukup untuk membeli Extra Spin!")
+
+        if not st.session_state["is_spinning"]:
+            spin_display_container.markdown(
+                """
+                <div style="text-align: center; padding: 35px; background: linear-gradient(135deg, #121212 0%, #1f1f2e 100%); border-radius: 16px; border: 2px solid #ff4b4b;">
+                    <h2>🎡 SIAP MEMUTAR RODA KEBERUNTUNGAN?</h2>
+                    <p style="color: #aaa;">Hadiah eksklusif menanti ketulusan disiplin belajarmu hari ini!</p>
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
+            
+            if st.button("🚀 TEKAN UNTUK PUTAR RODA (SPIN NOW!)", use_container_width=True, type="primary"):
+                st.session_state["is_spinning"] = True
+                st.rerun()
+        else:
+            # Simulasi Animasi Roda Slot Interaktif Real-time
+            animation_box = st.empty()
+            sample_icons = ["🪙", "✨", "⚡", "🗡️", "🛡️", "💍", "💣", "🧪", "👟", "👑", "💎", "🔥"]
+            
+            # Efek visual animasi berputar kencang lalu melambat
+            for i in range(12):
+                rand_visual = random.choice(epic_wheel_pool)
+                animation_box.markdown(
+                    f"""
+                    <div style="text-align: center; padding: 45px; background-color: #111; border-radius: 16px; border: 2px solid #ff4b4b;">
+                        <h1 style="font-size: 50px; margin: 0;">{rand_visual['icon']}</h1>
+                        <h3 style="color: #ff4b4b; margin-top: 10px;">Memutar Roda... (Kecepatan Level {12-i})</h3>
+                        <p style="color: #888;">Menyeleksi takdir item: <i>{rand_visual['name']}</i></p>
+                    </div>
+                    """, 
+                    unsafe_allow_html=True
+                )
+                time.sleep(0.12)
+
+            # Eksekusi Pemilihan Hadiah Berdasarkan Bobot (Weighted Random Choice)
+            pool_names = [item["name"] for item in epic_wheel_pool]
+            pool_weights = [item["weight"] for item in epic_wheel_pool]
+            chosen_item_data = random.choices(epic_wheel_pool, weights=pool_weights, k=1)[0]
+
+            # Update Tanggal Gacha Harian
             d["last_gacha_date"] = today_str
-            streak_multiplier = 1 + (d["streak"] * 0.1)
-            rewards = [
-                ("🪙 Bonus Gold", "gold", int(100 * streak_multiplier)), 
-                ("✨ Bonus EXP", "exp", int(150 * streak_multiplier))
-            ]
-            if any(b["name"] == "🍀 Clover of Luck" for b in d["active_buffs"]):
-                rewards.append(("💎 Jackpot Super (+300 Gold)", "gold", int(300 * streak_multiplier)))
-            chosen = random.choice(rewards)
-            if chosen[1] == "gold": d["gold"] += chosen[2]
-            elif chosen[1] == "exp": add_exp(chosen[2])
+            
+            # Proses Hadiah ke State Game (d)
+            reward_summary_text = ""
+            if chosen_item_data["type"] == "gold":
+                final_val = int(chosen_item_data["val"] * streak_multiplier)
+                d["gold"] += final_val
+                reward_summary_text = f"🪙 {final_val} Gold (Termasuk Bonus Streak {round(streak_multiplier, 2)}x)"
+            elif chosen_item_data["type"] == "exp":
+                final_val = int(chosen_item_data["val"] * streak_multiplier)
+                add_exp(final_val)
+                reward_summary_text = f"✨ {final_val} EXP (Termasuk Bonus Streak {round(streak_multiplier, 2)}x)"
+            elif chosen_item_data["type"] == "stamina":
+                d["stamina"] = min(d["max_stamina"], d["stamina"] + chosen_item_data["val"])
+                reward_summary_text = f"⚡ +{chosen_item_data['val']} Stamina berhasil dipulihkan!"
+            elif chosen_item_data["type"] == "item":
+                item_name = chosen_item_data["val"]
+                all_existing_gear = d["inventory"] + d["equipped_items"]
+                if item_name not in all_existing_gear:
+                    d["inventory"].append(item_name)
+                    reward_summary_text = f"🎁 Item Spesial Langka Didapatkan: **{item_name}**!"
+                else:
+                    # Jika item sudah ada, kompensasi konversi jadi Gold melimpah
+                    d["gold"] += 500
+                    reward_summary_text = f"🎁 Item {item_name} sudah dimiliki! Dikonversi otomatis menjadi +500 Gold Kompensasi."
+
+            # Simpan ke riwayat gacha session
+            st.session_state["gacha_history"].insert(0, {
+                "time": str(datetime.now().strftime("%H:%M:%S")),
+                "reward": reward_summary_text,
+                "rarity": chosen_item_data["rarity"]
+            })
+
+            st.session_state["is_spinning"] = False
             save_game()
+            st.balloons()
             st.rerun()
+
+    st.markdown("---")
+
+    # --- TABEL DETAIL KEMUNGKINAN HADIAH & RIWAYAT GACHA ---
+    tab_pool_info, tab_history = st.tabs(["📚 Katalog Pool Hadiah & Rarity", "📜 Riwayat Gacha Sesi Ini"])
+
+    with tab_pool_info:
+        st.markdown("### 🌟 Klasifikasi Tingkat Kelangkaan (Rarity Tier)")
+        st.caption("Berikut adalah seluruh daftar item, mata uang, dan bonus yang dapat ditarik dari Roda Gacha:")
+
+        # Tampilkan dalam bentuk card rapi berdasarkan rarity
+        for item in epic_wheel_pool:
+            with st.container(border=True):
+                col_i1, col_i2, col_i3, col_i4 = st.columns([0.5, 2, 1.5, 3])
+                col_i1.markdown(f"### {item['icon']}")
+                col_i2.markdown(f"**{item['name']}**")
+                
+                # Warna label rarity
+                rarity_color = {
+                    "Common": "🔵 Common",
+                    "Uncommon": "🟢 Uncommon",
+                    "Rare": "🟣 Rare",
+                    "Epic": "🟠 Epic",
+                    "Legendary": "🌟 LEGENDARY"
+                }.get(item["rarity"], item["rarity"])
+                
+                col_i3.markdown(f"`{rarity_color}`")
+                
+                effect_desc_map = {
+                    "gold": "Menambah pundi-pundi tabungan mata uang emas.",
+                    "exp": "Mempercepat progres kenaikan level karakter Nauval.",
+                    "stamina": "Mengisi ulang cadangan energi aksi harian.",
+                    "item": "Gear/Senjata spesial penambah status kekuatan pertempuran."
+                }
+                col_i4.text(effect_desc_map.get(item["type"], "Bonus spesial produktivitas."))
+
+    with tab_history:
+        st.markdown("### 🕒 Catatan Riwayat Tarikan Gacha")
+        if st.session_state["gacha_history"]:
+            for hist in st.session_state["gacha_history"]:
+                st.text(f"[{hist['time']}] - Rarity: ({hist['rarity']}) -> {hist['reward']}")
+        else:
+            st.info("Belum ada riwayat tarikan gacha pada sesi ini. Ayo putar rodanya sekarang!")
 
 # ================= TAB 8: PET =================
 with tab_pet:
