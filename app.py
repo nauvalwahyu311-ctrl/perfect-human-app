@@ -174,11 +174,188 @@ def log_activity(activity_name, value):
     d["activity_log"].append({"date": today_str, "activity": activity_name, "value": value})
 
 def update_title():
-    if d["level"] >= 30: d["title"] = "👑 THE PERFECT HUMAN EMPEROR"
-    elif d["level"] >= 20: d["title"] = "⚔️ Supreme Shadow Knight"
-    elif d["level"] >= 10: d["title"] = "🛡️ Guardian of Discipline"
-    elif d["level"] >= 5: d["title"] = "📜 Elite Initiate"
-    else: d["title"] = "🌱 Novice Initiate"
+    # Cek gelar lama sebelum di-update untuk mendeteksi kenaikan tier
+    old_title = d.get("title", "🌱 PEMULA")
+
+    if d["level"] >= 50:
+        d["title"] = "🌌 PENGUASA SINGULARITAS"
+        reward_achievement = "🏆 Pencapaian: Penguasa Singularitas"
+        effect_type = "singularity"
+    elif d["level"] >= 45:
+        d["title"] = "⚡ PUNCAK TRANSCENDENT"
+        reward_achievement = "🏆 Pencapaian: Puncak Transcendent"
+        effect_type = "transcendent"
+    elif d["level"] >= 40:
+        d["title"] = "🔥 PERINTIS MISTIK"
+        reward_achievement = "🏆 Pencapaian: Perintis Mistik"
+        effect_type = "mystic_fire"
+    elif d["level"] >= 35:
+        d["title"] = "⭐ SAGE KEDISIPLINAN ILAHI"
+        reward_achievement = "🏆 Pencapaian: Sage Kedisiplinan Ilahi"
+        effect_type = "divine_sage"
+    elif d["level"] >= 30:
+        d["title"] = "👑 KAISAR MANUSIA SEMPURNA"
+        reward_achievement = "🏆 Pencapaian: Kaisar Manusia Sempurna"
+        effect_type = "emperor_robe"
+    elif d["level"] >= 26:
+        d["title"] = "💎 GRANDMASTER LEGENDARIS"
+        reward_achievement = "🏆 Pencapaian: Grandmaster Legendaris"
+        effect_type = "grandmaster_crystal"
+    elif d["level"] >= 22:
+        d["title"] = "⚔️ KESATRIA BAYANGAN UTAMA"
+        reward_achievement = "🏆 Pencapaian: Kesatria Bayangan Utama"
+        effect_type = "shadow_dagger"
+    elif d["level"] >= 18:
+        d["title"] = "🛡️ GARDA VETERAN"
+        reward_achievement = "🏆 Pencapaian: Garda Veteran"
+        effect_type = "veteran_shield"
+    elif d["level"] >= 15:
+        d["title"] = "🛡️ PENGAWAL KEDISIPLINAN"
+        reward_achievement = "🏆 Pencapaian: Pengawal Kedisiplinan"
+        effect_type = "discipline_badge"
+    elif d["level"] >= 12:
+        d["title"] = "⚡ PRODIGY YANG BANGKIT"
+        reward_achievement = "🏆 Pencapaian: Prodigy yang Bangkit"
+        effect_type = "prodigy_potion"
+    elif d["level"] >= 10:
+        d["title"] = "📜 INISIATIF ELIT"
+        reward_achievement = "🏆 Pencapaian: Inisiatif Elit"
+        effect_type = "elite_scroll"
+    elif d["level"] >= 8:
+        d["title"] = "📘 SARJANA TERJAGA"
+        reward_achievement = "🏆 Pencapaian: Sarjana Terjaga"
+        effect_type = "scholar_pen"
+    elif d["level"] >= 6:
+        d["title"] = "🔍 PENCARI DISIPLIN"
+        reward_achievement = "🏆 Pencapaian: Pencari Disiplin"
+        effect_type = "focus_glass"
+    elif d["level"] >= 4:
+        d["title"] = "🌿 PEMagang FOKUS"
+        reward_achievement = "🏆 Pencapaian: Pemagang Fokus"
+        effect_type = "habit_seed"
+    elif d["level"] >= 2:
+        d["title"] = "🌱 PENGEMBARA HARAPAN"
+        reward_achievement = "🏆 Pencapaian: Pengembara Harapan"
+        effect_type = "traveler_boots"
+    else:
+        d["title"] = "🌱 PEMULA"
+        reward_achievement = None
+        effect_type = None
+
+    # Jika gelar berubah, berikan pencapaian (achievement) & jalankan efek uniknya langsung
+    if old_title != d["title"] and reward_achievement:
+        if "achievements" not in d:
+            d["achievements"] = []
+        
+        if reward_achievement not in d["achievements"]:
+            d["achievements"].append(reward_achievement)
+        
+        if "attributes" not in d: 
+            d["attributes"] = {"INT": 0, "STR": 0, "VIT": 0, "AGI": 0}
+
+        # --- EFEK KHUSUS MASING-MASING PENCAPAIAN DI TIAP TINGKATAN ---
+        if effect_type == "singularity":
+            d["max_hp"] += 300; d["max_stamina"] += 250; d["hp"] = d["max_hp"]; d["stamina"] = d["max_stamina"]
+            for k in d["attributes"]: d["attributes"][k] += 150
+            d["gold"] += 10000
+            effect_desc = "🌌 Efek Gelar Penguasa Singularitas: Seluruh Atribut +150, Max HP/Stamina +300/+250, & +10.000 Gold!"
+        elif effect_type == "transcendent":
+            d["max_stamina"] += 180; d["stamina"] = d["max_stamina"]
+            d["attributes"]["INT"] += 120; d["attributes"]["AGI"] += 100
+            d["gold"] += 7500
+            effect_desc = "⚡ Efek Gelar Puncak Transcendent: INT +120, AGI +100, Max Stamina +180, & +7.500 Gold!"
+        elif effect_type == "mystic_fire":
+            d["max_hp"] += 200; d["hp"] = d["max_hp"]
+            d["attributes"]["STR"] += 110; d["attributes"]["VIT"] += 90
+            d["gold"] += 5000
+            effect_desc = "🔥 Efek Gelar Perintis Mistik: STR +110, VIT +90, Max HP +200, & +5.000 Gold!"
+        elif effect_type == "divine_sage":
+            d["attributes"]["INT"] += 100
+            d["gold"] += 4000
+            effect_desc = "⭐ Efek Gelar Sage Ilahi: Atribut Intelijen (INT) meroket +100 & +4.000 Gold!"
+        elif effect_type == "emperor_robe":
+            d["max_hp"] += 150; d["max_stamina"] += 100; d["hp"] = d["max_hp"]; d["stamina"] = d["max_stamina"]
+            d["gold"] += 3500
+            effect_desc = "👑 Efek Gelar Kaisar: Max HP +150, Max Stamina +100, & +3.500 Gold Kas Negara!"
+        elif effect_type == "grandmaster_crystal":
+            d["attributes"]["STR"] += 80; d["attributes"]["AGI"] += 80
+            d["gold"] += 2500
+            effect_desc = "💎 Efek Gelar Grandmaster: STR & AGI masing-masing +80, & +2.500 Gold!"
+        elif effect_type == "shadow_dagger":
+            d["attributes"]["AGI"] += 90
+            d["gold"] += 2000
+            effect_desc = "🗡️ Efek Gelar Kesatria Bayangan: Kelincahan (AGI) meningkat +90 & +2.000 Gold!"
+        elif effect_type == "veteran_shield":
+            d["max_hp"] += 100; d["hp"] = d["max_hp"]
+            d["attributes"]["VIT"] += 70
+            d["gold"] += 1500
+            effect_desc = "🛡️ Efek Gelar Garda Veteran: Max HP +100, Vitality (VIT) +70, & +1.500 Gold!"
+        elif effect_type == "discipline_badge":
+            d["attributes"]["INT"] += 50; d["attributes"]["VIT"] += 50
+            d["gold"] += 1000
+            effect_desc = "📜 Efek Gelar Pengawal Disiplin: INT & VIT masing-masing +50, & +1.000 Gold!"
+        elif effect_type == "prodigy_potion":
+            d["max_stamina"] += 60; d["stamina"] = d["max_stamina"]
+            d["gold"] += 800
+            effect_desc = "⚡ Efek Gelar Prodigy: Max Stamina permanen +60 & +800 Gold!"
+        elif effect_type == "elite_scroll":
+            d["attributes"]["INT"] += 40
+            d["gold"] += 600
+            effect_desc = "📜 Efek Gelar Inisiatif Elit: Intelijen (INT) +40 & +600 Gold!"
+        elif effect_type == "scholar_pen":
+            d["attributes"]["INT"] += 25
+            d["gold"] += 400
+            effect_desc = "📘 Efek Gelar Sarjana Terjaga: Intelijen (INT) +25 & +400 Gold!"
+        elif effect_type == "focus_glass":
+            d["attributes"]["AGI"] += 20
+            d["gold"] += 300
+            effect_desc = "🔍 Efek Gelar Pencari Disiplin: Kelincahan (AGI) +20 & +300 Gold!"
+        elif effect_type == "habit_seed":
+            d["attributes"]["VIT"] += 15
+            d["gold"] += 200
+            effect_desc = "🌿 Efek Gelar Pemagang Fokus: Vitality (VIT) +15 & +200 Gold!"
+        elif effect_type == "traveler_boots":
+            d["max_stamina"] += 20; d["stamina"] = d["max_stamina"]
+            d["gold"] += 100
+            effect_desc = "🥾 Efek Gelar Pengembara: Max Stamina +20 & +100 Gold!"
+        else:
+            effect_desc = "Mendapatkan pencapaian baru."
+
+        st.balloons()
+        st.success(f"🎉 SELAMAT NAUVAL! Naik Gelar ke **{d['title']}**!\n\n🏆 Membuka Pencapaian Baru: **{reward_achievement}**!\n✨ {effect_desc}")
+
+# --- UI DETAIL & INFORMASI TITLE YANG LEBIH MENARIK ---
+with st.expander("✨ Lihat Detail Gelar & Informasi Status Karakter", expanded=False):
+    st.markdown(
+        f"""
+        <div style="background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%); padding: 20px; border-radius: 14px; border: 2px solid #ff9a9e; color: white;">
+            <h3 style="margin-top: 0; color: #ff9a9e;">👑 Status Gelar Aktif: {d.get('title', 'PEMULA')}</h3>
+            <p style="margin-bottom: 5px;"><b>Level Karakter Saat Ini:</b> Level {d.get('level', 1)}</p>
+            <p style="margin-bottom: 15px;"><b>Master:</b> Nauval (Mode Mentor Akademik Aktif 🌸)</p>
+            <hr style="border-color: rgba(255,255,255,0.2);">
+            <h4 style="color: #fecfef; margin-bottom: 8px;">📜 Daftar Seluruh Tingkatan Gelar & Pencapaian (Achievement):</h4>
+            <ul style="padding-left: 20px; line-height: 1.6; font-size: 14px;">
+                <li><b>Level 50+ :</b> 🌌 PENGUASA SINGULARITAS ➔ <i>Pencapaian: Penguasa Singularitas (Semua Atribut +150, Max HP/Stamina +300/+250)</i></li>
+                <li><b>Level 45+ :</b> ⚡ PUNCAK TRANSCENDENT ➔ <i>Pencapaian: Puncak Transcendent (INT +120, AGI +100, Max Stamina +180)</i></li>
+                <li><b>Level 40+ :</b> 🔥 PERINTIS MISTIK ➔ <i>Pencapaian: Perintis Mistik (STR +110, VIT +90, Max HP +200)</i></li>
+                <li><b>Level 35+ :</b> ⭐ SAGE KEDISIPLINAN ILAHI ➔ <i>Pencapaian: Sage Kedisiplinan Ilahi (INT +100)</i></li>
+                <li><b>Level 30+ :</b> 👑 KAISAR MANUSIA SEMPURNA ➔ <i>Pencapaian: Kaisar Manusia Sempurna (Max HP +150, Max Stamina +100)</i></li>
+                <li><b>Level 26+ :</b> 💎 GRANDMASTER LEGENDARIS ➔ <i>Pencapaian: Grandmaster Legendaris (STR & AGI +80)</i></li>
+                <li><b>Level 22+ :</b> ⚔️ KESATRIA BAYANGAN UTAMA ➔ <i>Pencapaian: Kesatria Bayangan Utama (AGI +90)</i></li>
+                <li><b>Level 18+ :</b> 🛡️ GARDA VETERAN ➔ <i>Pencapaian: Garda Veteran (Max HP +100, VIT +70)</i></li>
+                <li><b>Level 15+ :</b> 🛡️ PENGAWAL KEDISIPLINAN ➔ <i>Pencapaian: Pengawal Kedisiplinan (INT & VIT +50)</i></li>
+                <li><b>Level 12+ :</b> ⚡ PRODIGY YANG BANGKIT ➔ <i>Pencapaian: Prodigy yang Bangkit (Max Stamina +60)</i></li>
+                <li><b>Level 10+ :</b> 📜 INISIATIF ELIT ➔ <i>Pencapaian: Inisiatif Elit (INT +40)</i></li>
+                <li><b>Level 8+ :</b> 📘 SARJANA TERJAGA ➔ <i>Pencapaian: Sarjana Terjaga (INT +25)</i></li>
+                <li><b>Level 6+ :</b> 🔍 PENCARI DISIPLIN ➔ <i>Pencapaian: Pencari Disiplin (AGI +20)</i></li>
+                <li><b>Level 4+ :</b> 🌿 PEMagang FOKUS ➔ <i>Pencapaian: Pemagang Fokus (VIT +15)</i></li>
+                <li><b>Level 2+ :</b> 🌱 PENGEMBARA HARAPAN ➔ <i>Pencapaian: Pengembara Harapan (Max Stamina +20)</i></li>
+                <li><b>Level 1 :</b> 🌱 PEMULA ➔ <i>(Tanpa Pencapaian Khusus)</i></li>
+            </ul>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 def check_achievements():
     now = datetime.now()
